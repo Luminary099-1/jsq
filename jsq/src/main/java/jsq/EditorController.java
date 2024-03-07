@@ -77,7 +77,7 @@ public class EditorController
 	/** Displays the targets of the selected stop cues. */
 	@FXML protected TextArea _cueSelectedStopped;
 	
-	/** JavaFX injectable initialization of the editor GUI. */
+	/** JavaFX injectable initialization of the editor's GUI. */
 	public void initialize()
 	{
 		Context._stage.setTitle("JSQ: New Project");
@@ -555,6 +555,8 @@ public class EditorController
 		_cueList.refresh();
 	}
 
+	// ToDo: Implement handler to update cue notes.
+
 	/**
 	 * Updates the targetted cues of all selected Stop cues. The user is shown
 	 * a dialog to select which cues to target.
@@ -562,10 +564,9 @@ public class EditorController
 	@FXML protected void OnSelectStopCues()
 	{
 		MultipleSelectionModel<Cue> sm = _cueList.getSelectionModel();
-		StopSelector modal = new StopSelector(sm.getSelectedIndices().get(0));
-		modal.showAndWait();
-		if (!modal.Accepted()) return;
-		ObservableList<StoppableCue> targets = modal.Selection();
+		ObservableList<StoppableCue> targets
+			= StopSelector.GetSelection(sm.getSelectedIndices().get(0));
+		if (targets == null) return;
 		SetSelectedStopText(targets);
 
 		Command command = null;

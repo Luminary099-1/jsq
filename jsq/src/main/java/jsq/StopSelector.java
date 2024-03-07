@@ -18,18 +18,16 @@ import jsq.cue.StoppableCue;
 
 /** Modal to select cues to set the target of a {@link jsq.cue.Stop}. */
 public class StopSelector extends Stage
-// ToDo: Refactor out the need for _accepted.
+// ToDo: Preselect the stop cue's already selected cues (for a single stop cue selection).
 {	
 	/** Cue list for the selection of stop targets. */
 	@FXML protected ListView<Cue> _cueList;
 	/** Cue list index of the earliest cue to be assigned these targets. */
 	protected int _stoppingIndex;
-	/** Indicates if the user accepted their selection. */
-	protected boolean _accepted = false;
 	/** To store the selection for reterival by the calling code. */
-	protected ObservableList<StoppableCue> _selection;
+	protected ObservableList<StoppableCue> _selection = null;
 
-	/** JavaFX injectable initialization of the editor GUI. */
+	/** JavaFX injectable initialization of the modal's GUI. */
 	public void initialize()
 	{
 		_cueList.setItems(Context.GetCueList());
@@ -40,10 +38,9 @@ public class StopSelector extends Stage
 
 	/**
 	 * Creates a new modal to select stop cue targets.
-	 * @param stopping_index Cue list index of the first stop cue whose targets
-	 * are to be selected.
+	 * @param stopping_index The index of the first stop cue to target.
 	 */
-	public StopSelector(int stopping_index)
+	private StopSelector(int stopping_index)
 	{
 		super();
 		_stoppingIndex = stopping_index;
@@ -60,26 +57,21 @@ public class StopSelector extends Stage
 	}
 
 	/**
-	 * @return {@code true} if the user accepted their selection; {@code false}
-	 * otherwise.
+	 * Prompt the user to select the targets for stop cues.
+	 * @param stopping_index The index of the first stop cue to target.
+	 * @return The cues the user selected to stop. If null, the user did not
+	 * make a selection.
 	 */
-	public boolean Accepted()
+	public static ObservableList<StoppableCue> GetSelection(int stopping_index)
 	{
-		return _accepted;
+		StopSelector selector = new StopSelector(stopping_index);
+		selector.showAndWait();
+		return selector._selection;
 	}
 
-	/**
-	 * @return The selection of cues to stop made by the user.
-	 */
-	public ObservableList<StoppableCue> Selection()
-	{
-		return _selection;
-	}
-
-	/** Mark the dialog as accepted and store the user's selection. */
+	/** Store the user's selection. */
 	@FXML protected void OnAccpet()
 	{
-		_accepted = true;
 		_selection = FXCollections.observableArrayList();
 		for (Cue cue : _cueList.getSelectionModel().getSelectedItems())
 			_selection.add((StoppableCue) cue);
