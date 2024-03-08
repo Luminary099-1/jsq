@@ -12,6 +12,7 @@ import jsq.cue.Cue;
 
 /** List cell with custom graphics to display cues. */
 public class CueListCell extends ListCell<Cue>
+// ToDo: Determine why this doesn't display correctly.
 {
 	/** HBox root of this cell's graphic. */
 	@FXML protected HBox _root;
@@ -38,7 +39,6 @@ public class CueListCell extends ListCell<Cue>
 	@Override protected void updateItem(Cue cue, boolean empty)
 	{
 		super.updateItem(cue, empty);
-		setText(null);
 
 		if (empty || cue == null)
 		{
