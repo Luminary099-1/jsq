@@ -57,12 +57,9 @@
       <menus>
         <Menu text="_File">
           <items>
-            <MenuItem onAction="#OnFileNew" text="_New" />
-            <MenuItem onAction="#OnFileOpen" text="_Open..." />
-            <Menu onAction="#OnFileOpenRecent" text="Open _Recent" />
+            <MenuItem onAction="#OnFileOpen" text="_Open Project" />
             <SeparatorMenuItem mnemonicParsing="false" />
             <MenuItem onAction="#OnFileSave" text="_Save" />
-            <MenuItem onAction="#OnFileSaveAs" text="Save _As..." />
             <MenuItem onAction="#OnFileRevert" text="_Revert" />
             <SeparatorMenuItem mnemonicParsing="false" />
             <MenuItem onAction="#OnFilePreferences" text="_Preferences…" />

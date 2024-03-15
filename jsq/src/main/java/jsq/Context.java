@@ -73,9 +73,8 @@ public class Context
 	protected static void UpdateStageTitle()
 	{
 		Context._stage.setTitle(String.format(
-			"JSQ: %s%s%c",
-			(_file == null) ? "" : ": ",
-			(_file == null) ? "New Project" : _file.getName(),
+			"JSQ: %s%c",
+			_file.getName(),
 			(IsSaved()) ? ' ' : '*'
 		));
 	}
@@ -139,16 +138,16 @@ public class Context
 	public static boolean InitializeProjectDirectory(File project_dir)
 	{
 		project_dir.mkdir();
-		new File(project_dir, "/sounds").mkdir();
+		new File(project_dir, "sounds").mkdir();
 
-		File project_data = new File(project_dir, "/data.jsq");
+		File project_data = new File(project_dir, "data.jsq");
 		Project empty_project = new Project();
 		try
 		{
-			ObjectOutputStream oo
+			ObjectOutputStream os
 				= new ObjectOutputStream(new FileOutputStream(project_data));
-			oo.writeObject(empty_project);
-			oo.close();
+			empty_project.WriteObject(os);
+			os.close();
 		}
 		catch (IOException e)
 		{
@@ -164,13 +163,14 @@ public class Context
 	/**
 	 * Loads a project state into {@code _project} from the location specified
 	 * by {@code _file}.
+	 * @throws Exception If an error occurs reading the project.
 	 */
 	public static void Load() throws Exception
-	// ToDo: Debug the issue loading things.
 	{
 		Reset();
+		File data = new File(_file, "data.jsq");
 		ObjectInputStream is
-			= new ObjectInputStream(new FileInputStream(_file));
+			= new ObjectInputStream(new FileInputStream(data));
 		_project.ReadObject(is);
 		is.close();
 	}
@@ -178,13 +178,15 @@ public class Context
 	/**
 	 * Saves the current state of {@code _project} to the location specified by
 	 * {@code _file}.
+	 * @throws IOException If an error occurs writing the project.
 	 */
 	public static void Save() throws IOException
 	{
 		try
 		{
+			File data = new File(_file, "data.jsq");
 			ObjectOutputStream os
-				= new ObjectOutputStream(new FileOutputStream(_file));
+				= new ObjectOutputStream(new FileOutputStream(data));
 			_project.WriteObject(os);
 			os.close();
 		}
@@ -215,7 +217,6 @@ public class Context
 		_clipboard.clear();
 		_project.Clear();
 		_lastSaved = null;
-		_file = null;
 	}
 
 	/**

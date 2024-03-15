@@ -9,6 +9,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
+import javafx.scene.control.MultipleSelectionModel;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TextField;
 
@@ -20,7 +21,7 @@ public class HomeController
 	@FXML protected ListView<File> _workspaceList;
 	/** Field to input the name of a new project. */
 	@FXML protected TextField _createNameField;
-
+	/** Triggers the creation of a new project. */
 	@FXML protected Button _createButton;
 	/** Stores the paths of all projects in the workspace. */
 	protected ObservableList<File> _recentProjects;
@@ -52,6 +53,7 @@ public class HomeController
 	
 	/** JavaFX injectable initialization of the editor's GUI. */
 	public void initialize()
+	// ToDo: Implement custom cell for the list view.
 	{
 		Context._stage.setTitle("JSQ: Home");
 		_recentProjects = FXCollections.observableArrayList();
@@ -64,9 +66,14 @@ public class HomeController
 	}
 
 	/** Opens the project selected in the list of workspace projects. */
-	@FXML protected void OnFileOpenRecent()
+	@FXML protected void OnOpenWorkspace()
 	{
-		// ToDo: Implement this.
+		MultipleSelectionModel<File> sm = _workspaceList.getSelectionModel();
+		if (sm.isEmpty()) return;
+		Context._file = sm.getSelectedItem();
+		try { Context.Load();}
+		catch (Exception e) { e.printStackTrace(); }
+		Context.SwitchScene(EditorController.class.getResource("editor.fxml"));
 	}
 
 	/** Disables the create project button if there is no name specified. */
@@ -80,7 +87,7 @@ public class HomeController
 	 * is shown to the user and nothing is created if there is already a project
 	 * with the same name.
 	 */
-	@FXML protected void OpCreateNew()
+	@FXML protected void OnCreateNew()
 	{
 		File project_dir
 			= new File(Context._workspace, _createNameField.getText());
@@ -108,6 +115,7 @@ public class HomeController
 			return;
 		}
 
+		Context._file = project_dir;
 		Context.SwitchScene(EditorController.class.getResource("editor.fxml"));
 	}
 }

@@ -231,25 +231,6 @@ public class EditorController
 	}
 
 	/**
-	 * Prompts the user with a dialog to determine where to save/load a project.
-	 * @param title Title for the dialog.
-	 * @param is_save {@code true} if the dialog is being used to determine a
-	 * save location; {@code false} if being used to determine a load location.
-	 * @return File path selected by the user.
-	 */
-	protected File GetProjectSaveFile(String title, boolean is_save)
-	{
-		FileChooser chooser = new FileChooser();
-		chooser.setTitle(title);
-		chooser.getExtensionFilters().addAll(
-			new ExtensionFilter("Java Sound Cue Files", "*.jsq"),
-			new ExtensionFilter("All Files", "*.*")
-		);
-		if (is_save) return chooser.showSaveDialog(Context._stage);
-		else return chooser.showOpenDialog(Context._stage);
-	}
-
-	/**
 	 * Sets the text of {@code _cueSelectedStopped} to display the cues stored
 	 * in the past list.
 	 * @param targets List of cues to display. 
@@ -264,67 +245,18 @@ public class EditorController
 	}
 
 	/**
-	 * Creates a new blank project. Prompts the user to verify if the current is
-	 * unsaved.
-	 */
-	@FXML protected void OnFileNew()
-	{
-		if (!ConfirmSaved("create a new project")) return;
-		Context.Reset();
-	}
-
-	/**
-	 * Opens a saved project. Prompts the user to verify if the current is
-	 * unsaved.
+	 * Returns the user to the home interface. Prompts the user to verify if the
+	 * current is unsaved.
 	 */
 	@FXML protected void OnFileOpen()
 	{
 		if (!ConfirmSaved("open a project")) return;
-		Context._file = GetProjectSaveFile("Open Project", false);
-		try { Context.Load(); }
-		catch (Exception e)
-		{
-			ExceptionDialog("Error", 
-				"An error prevented the project from being opened.", e);
-		}
+		Context.SwitchScene(HomeController.class.getResource("home.fxml"));		
 	}
 
-	/** */
-	@FXML protected void OnFileOpenRecent()
-	{
-		if (!ConfirmSaved("open a project")) return;
-		// ToDo: Finish implementing this.
-	}
-
-	/**
-	 * Saves the current project. If the project was loaded or saved previously,
-	 * the last save location is used. Otherwise, the user is prompted to
-	 * specify a save destination.
-	 */
+	/** Saves the current project to its workspace folder. */
 	@FXML protected void OnFileSave()
 	{
-		if (Context._file == null)
-		{
-			Context._file = GetProjectSaveFile("Save Project", true);
-			if (Context._file == null) return;
-		}
-		try { Context.Save(); }
-		catch (Exception e)
-		{
-			ExceptionDialog("Error", 
-				"An error prevented the project from being saved.", e);
-		}
-	}
-
-	/**
-	 * Saves the current project. The user is always prompted to specify the
-	 * save destination.
-	 */
-	@FXML protected void OnFileSaveAs()
-	{
-		File new_file = GetProjectSaveFile("Save Project As", true);
-		if (new_file == null) return;
-		Context._file = new_file;
 		try { Context.Save(); }
 		catch (Exception e)
 		{
@@ -481,7 +413,7 @@ public class EditorController
 		sm.clearAndSelect(destination);
 	}
 
-	// ToDo: Modularize the following update methods.
+	// ToDo: Modularize the following update methods?
 
 	/**
 	 * Updates the names of all selected cues to the newly updated value in
