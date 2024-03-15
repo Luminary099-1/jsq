@@ -53,7 +53,6 @@ public class HomeController
 	
 	/** JavaFX injectable initialization of the editor's GUI. */
 	public void initialize()
-	// ToDo: Implement custom cell for the list view.
 	{
 		Context._stage.setTitle("JSQ: Home");
 		_recentProjects = FXCollections.observableArrayList();
@@ -63,6 +62,7 @@ public class HomeController
 
 		_workspaceList.setItems(_recentProjects);
 		_workspaceList.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+		_workspaceList.setCellFactory(workspace_lv -> new WorkspaceFileCell());
 	}
 
 	/** Opens the project selected in the list of workspace projects. */
