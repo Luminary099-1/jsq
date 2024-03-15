@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+
+<HBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="jsq.HomeController">
+   <children>
+      <VBox alignment="CENTER">
+         <children>
+            <Label alignment="CENTER" text="Workspace Projects" textAlignment="CENTER">
+               <font>
+                  <Font size="18.0" />
+               </font>
+            </Label>
+            <ListView fx:id="_workspaceList" VBox.vgrow="ALWAYS" />
+         </children>
+      </VBox>
+      <VBox alignment="CENTER" HBox.hgrow="ALWAYS">
+         <children>
+            <HBox alignment="CENTER" spacing="5.0" VBox.vgrow="ALWAYS">
+               <children>
+                  <Label text="Specify Project Name:" />
+                  <TextField fx:id="_createNameField" onKeyTyped="#OnNewNameUpdate" promptText="New Project Name" />
+               </children>
+               <VBox.margin>
+                  <Insets />
+               </VBox.margin>
+            </HBox>
+            <ToolBar nodeOrientation="RIGHT_TO_LEFT" prefHeight="40.0">
+              <items>
+                <Button fx:id="_createButton" disable="true" mnemonicParsing="false" onAction="#OpCreateNew" text="Create Project" />
+              </items>
+            </ToolBar>
+         </children>
+      </VBox>
+   </children>
+</HBox>

@@ -6,9 +6,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.URL;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.stage.Stage;
 import jsq.command.BulkCommand;
 import jsq.command.Command;
@@ -23,8 +27,8 @@ public class Context
 	/** The application's primary stage. */
 	public static Stage _stage;
 	/** Directory of the workspace where projects are stored. */
-	static File _workspaceDir = null;
-	/** The current project save destination. */
+	static File _workspace = null;
+	/** The current project directory. */
 	public static File _file = null;
 	/** Project instance to store the current project's state. */
 	protected static Project _project = new Project();
@@ -41,6 +45,29 @@ public class Context
 	ObservableList<Cue> _clipboard = FXCollections.observableArrayList();
 	/** Indicates the contents of the clipboard were cut, not copied. */
 	protected static boolean _cutClipboard;
+
+	/**
+	 * Switches the primary application window to the interface described by the
+	 * passed FXML.
+	 * @param fxml FXML to load and display on the primary window.
+	 */
+	public static void SwitchScene(URL fxml)
+	{
+		_stage.hide();
+		FXMLLoader loader = new FXMLLoader(fxml);
+		Parent root = null;
+		
+		try { root = loader.load(); }
+		catch (IOException e) { e.printStackTrace(); }
+		
+		Scene old = _stage.getScene();
+		double width = old != null ? old.getWidth() : 1280;
+		double height = old != null ? old.getHeight() : 720;
+		
+		Scene scene = new Scene(root, width, height);
+		_stage.setScene(scene);
+		_stage.show();
+	}
 
 	/** Updates the primary window's title as the context is manipulated. */
 	protected static void UpdateStageTitle()
@@ -100,6 +127,37 @@ public class Context
 			Command last_command = _undoStack.get(undo_size - 1);
 			if (last_command != _lastSaved) return false;
 		}
+		return true;
+	}
+
+	/**
+	 * Creates a new, empty project directory at the specified path.
+	 * @param project_dir Path of the new directory.
+	 * @return {@code true} if the creation was successful; {@code false}
+	 * otherwise.
+	 */
+	public static boolean InitializeProjectDirectory(File project_dir)
+	{
+		project_dir.mkdir();
+		new File(project_dir, "/sounds").mkdir();
+
+		File project_data = new File(project_dir, "/data.jsq");
+		Project empty_project = new Project();
+		try
+		{
+			ObjectOutputStream oo
+				= new ObjectOutputStream(new FileOutputStream(project_data));
+			oo.writeObject(empty_project);
+			oo.close();
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+			return false;
+		}
+
+		Context.Reset();
+		_project = empty_project;
 		return true;
 	}
 

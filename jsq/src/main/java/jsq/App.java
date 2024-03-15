@@ -9,9 +9,6 @@ import org.json.JSONTokener;
 
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.stage.Stage;
 
@@ -34,6 +31,23 @@ public class App extends Application
 	}
 
 	/**
+	 * If necessary, creates a directory for the workspace at the specified
+	 * default location.
+	 * @param home_dir The home directory of the current user (parent
+	 * directory).
+	 * @return {@code true} if the directory was created successfully or found
+	 * to already exist; {@code false} otherwise.
+	 */
+	protected static boolean SetDefaultWorkspace(String home_dir)
+	{
+		File workspace_dir = new File(home_dir, "/jsq_workspace");
+		Context._workspace = workspace_dir;
+		if (!workspace_dir.isDirectory())
+			return workspace_dir.mkdir();
+		else return true;
+	}
+
+	/**
 	 * Loads the application settings from the "jsq.json" file stored in the
 	 * user's home directory. If the file does not exist, the relevant values in
 	 * Context are initialized to their defaults.
@@ -43,28 +57,33 @@ public class App extends Application
 	protected static boolean LoadSettings()
 	{
 		String home_dir = System.getenv("HOME");
-		File settings_file = new File(home_dir.concat("/jsq.json"));
+		if (home_dir == null) return false;
+		File settings_file = new File(home_dir, "/jsq.json");
 		JSONObject settings = null;
 		try (FileInputStream set_stream = new FileInputStream(settings_file))
 		{
 			settings = new JSONObject(new JSONTokener(set_stream));
 		}
-		catch (IOException e) { return false; }
+		catch (IOException e)
+		{
+			// Unable to read file, so apply the default settings:
+			return SetDefaultWorkspace(home_dir);
+		}
 
-		// Populate the workspace directory:
+		// Grab the workspace directory setting:
 		if (settings.has("workspace"))
 		{
 			String workspace_path = settings.getString("workspace");
-			if (workspace_path.length() != 0)
-				Context._workspaceDir = new File(workspace_path);
+			File workspace_dir = new File(workspace_path);
+			if (workspace_path.length() == 0 || !workspace_dir.isDirectory())
+				return false;
+			Context._workspace = workspace_dir;
+			return true;
 		}
-		else 
-			Context._workspaceDir = new File(home_dir.concat("/jsq_workspace"));
-
-		return true;
+		else return SetDefaultWorkspace(home_dir);
 	}
 
-	@Override public void start(Stage stage) throws IOException
+	@Override public void start(Stage stage)
 	{
 		if (!_canRun)
 		{
@@ -78,11 +97,7 @@ public class App extends Application
 		}
 
 		Context._stage = stage;
-		FXMLLoader fxmlLoader
-			= new FXMLLoader(getClass().getResource("editor.fxml"));
-		Parent root_node = fxmlLoader.load();
-		Scene _scene = new Scene(root_node, 1280, 720);
-		stage.setScene(_scene);
+		Context.SwitchScene(HomeController.class.getResource("home.fxml"));
 		stage.show();
 	}
 }
