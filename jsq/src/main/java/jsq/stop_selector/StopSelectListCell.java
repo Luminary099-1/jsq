@@ -1,4 +1,4 @@
-package jsq;
+package jsq.stop_selector;
 
 import java.io.IOException;
 
@@ -12,7 +12,7 @@ import jsq.cue.StoppableCue;
 
 
 /** List cell that disables itself if not stoppable by a certain stop cue. */
-public class SelectStopListCell extends ListCell<Cue>
+public class StopSelectListCell extends ListCell<Cue>
 {
 	/** HBox root of this cell's graphic. */
 	@FXML protected HBox _root;
@@ -36,7 +36,7 @@ public class SelectStopListCell extends ListCell<Cue>
 	 * @param stopping_index Index of the first stop cue whose stoppable targets
 	 * are being selected.
 	 */
-	public SelectStopListCell(int stopping_index)
+	public StopSelectListCell(int stopping_index)
 	{
 		super();
 		_stoppingIndex = stopping_index;
@@ -60,7 +60,7 @@ public class SelectStopListCell extends ListCell<Cue>
 		if (_loader == null)
 		{
 			FXMLLoader _loader = new FXMLLoader(
-				CueListCell.class.getResource("stopSelectCell.fxml"));
+				StopSelectListCell.class.getResource("stopSelectCell.fxml"));
 			_loader.setController(this);
 			try { _loader.load(); }
 			catch (IOException e) { e.printStackTrace(); }

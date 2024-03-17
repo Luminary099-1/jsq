@@ -11,6 +11,7 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.stage.Stage;
+import jsq.home.HomeController;
 
 
 /** JavaFX app for JSQ. */

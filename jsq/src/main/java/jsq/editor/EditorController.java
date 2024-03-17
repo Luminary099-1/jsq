@@ -1,4 +1,4 @@
-package jsq;
+package jsq.editor;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -25,6 +25,8 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
+import jsq.Context;
+import jsq.CueTypes;
 import jsq.command.BulkCommand;
 import jsq.command.Command;
 import jsq.command.DeleteCue;
@@ -37,6 +39,8 @@ import jsq.cue.Cue;
 import jsq.cue.PlaySound;
 import jsq.cue.Stop;
 import jsq.cue.StoppableCue;
+import jsq.home.HomeController;
+import jsq.stop_selector.StopSelector;
 
 
 /** JavaFX controller for the project editor interface. */

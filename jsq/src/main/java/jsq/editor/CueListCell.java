@@ -1,4 +1,4 @@
-package jsq;
+package jsq.editor;
 
 import java.io.IOException;
 

@@ -27,7 +27,7 @@ public class Context
 	/** The application's primary stage. */
 	public static Stage _stage;
 	/** Directory of the workspace where projects are stored. */
-	static File _workspace = null;
+	public static File _workspace = null;
 	/** The current project directory. */
 	public static File _file = null;
 	/** Project instance to store the current project's state. */

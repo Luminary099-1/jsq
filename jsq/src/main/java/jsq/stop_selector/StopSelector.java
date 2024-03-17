@@ -1,4 +1,4 @@
-package jsq;
+package jsq.stop_selector;
 
 import java.io.IOException;
 
@@ -12,6 +12,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.SelectionMode;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import jsq.Context;
 import jsq.cue.Cue;
 import jsq.cue.StoppableCue;
 
@@ -32,7 +33,7 @@ public class StopSelector extends Stage
 	{
 		_cueList.setItems(Context.GetCueList());
 		_cueList.setCellFactory(
-			cue_lv -> new SelectStopListCell(_stoppingIndex));
+			cue_lv -> new StopSelectListCell(_stoppingIndex));
 		_cueList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 	}
 

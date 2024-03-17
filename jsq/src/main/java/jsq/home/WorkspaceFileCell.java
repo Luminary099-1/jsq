@@ -1,4 +1,4 @@
-package jsq;
+package jsq.home;
 
 import java.io.File;
 

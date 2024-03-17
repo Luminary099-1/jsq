@@ -1,4 +1,4 @@
-package jsq;
+package jsq.home;
 
 import java.io.File;
 
@@ -12,6 +12,8 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.MultipleSelectionModel;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TextField;
+import jsq.Context;
+import jsq.editor.EditorController;
 
 
 /** JavaFX controller for the home interface. */

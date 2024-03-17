@@ -1,6 +1,7 @@
-package jsq;
+package jsq.editor;
 
 import javafx.scene.control.ListCell;
+import jsq.CueTypes;
 
 
 /** List cell with custom text to display the entries of the new cue combo. */
