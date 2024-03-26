@@ -1,6 +1,6 @@
 package jsq.command;
 
-import jsq.Project;
+import jsq.project.Project;
 
 
 /** Command to apply multiple commands of the same type. */

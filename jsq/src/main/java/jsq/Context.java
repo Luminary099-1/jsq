@@ -19,6 +19,8 @@ import jsq.command.Command;
 import jsq.command.DeleteCue;
 import jsq.command.InsertCue;
 import jsq.cue.Cue;
+import jsq.project.Project;
+import jsq.project.Resource;
 
 
 /** Stores the global context of the JSQ application instance. */
@@ -28,8 +30,8 @@ public class Context
 	public static Stage _stage;
 	/** Directory of the workspace where projects are stored. */
 	public static File _workspace = null;
-	/** The current project directory. */
-	public static File _file = null;
+	/** Directory of the currently open project. */
+	public static File _folder;
 	/** Project instance to store the current project's state. */
 	protected static Project _project = new Project();
 	/** Stack to store operations after they're applied. */
@@ -69,12 +71,12 @@ public class Context
 		_stage.show();
 	}
 
-	/** Updates the primary window's title as the context is manipulated. */
-	protected static void UpdateStageTitle()
+	/** Sets the stage's title to reflect the currently open project. */
+	public static void UpdateStageTitle()
 	{
 		Context._stage.setTitle(String.format(
 			"JSQ: %s%c",
-			_file.getName(),
+			_folder.getName(),
 			(IsSaved()) ? ' ' : '*'
 		));
 	}
@@ -138,7 +140,7 @@ public class Context
 	public static boolean InitializeProjectDirectory(File project_dir)
 	{
 		project_dir.mkdir();
-		new File(project_dir, "sounds").mkdir();
+		new File(project_dir, "resources").mkdir();
 
 		File project_data = new File(project_dir, "data.jsq");
 		Project empty_project = new Project();
@@ -162,13 +164,13 @@ public class Context
 
 	/**
 	 * Loads a project state into {@code _project} from the location specified
-	 * by {@code _file}.
+	 * by the user.dir system variable.
 	 * @throws Exception If an error occurs reading the project.
 	 */
 	public static void Load() throws Exception
 	{
 		Reset();
-		File data = new File(_file, "data.jsq");
+		File data = new File(Context._folder, "data.jsq");
 		ObjectInputStream is
 			= new ObjectInputStream(new FileInputStream(data));
 		_project.ReadObject(is);
@@ -177,14 +179,14 @@ public class Context
 
 	/**
 	 * Saves the current state of {@code _project} to the location specified by
-	 * {@code _file}.
+	 * the user.dir system variable.
 	 * @throws IOException If an error occurs writing the project.
 	 */
 	public static void Save() throws IOException
 	{
 		try
 		{
-			File data = new File(_file, "data.jsq");
+			File data = new File(Context._folder, "data.jsq");
 			ObjectOutputStream os
 				= new ObjectOutputStream(new FileOutputStream(data));
 			_project.WriteObject(os);
@@ -195,6 +197,7 @@ public class Context
 
 		int undo_size = _undoStack.size();
 		_lastSaved = (undo_size > 0) ? _undoStack.get(undo_size - 1) : null;
+		UpdateStageTitle();
 	}
 
 	/**
@@ -235,8 +238,8 @@ public class Context
 		if (is_cut)
 		{
 			DeleteCue[] delete_commands = new DeleteCue[_clipboard.size()];
-			for (Integer i : selected) delete_commands[i]
-				= new DeleteCue(selected.get(i));
+			for (Integer i : selected)
+				delete_commands[i] = new DeleteCue(selected.get(i));
 			Apply(new BulkCommand<DeleteCue>(delete_commands));
 		}
 	}
@@ -261,5 +264,40 @@ public class Context
 					= new InsertCue(index, _clipboard.get(i).clone());
 
 		Apply(new BulkCommand<InsertCue>(create_commands));
+	}
+
+	/**
+	 * Declares a new useage of a resource in the project.
+	 * @param source Absolute path of the resource to incorporate.
+	 * @return Newly incorporated resource.
+	 */
+	public static Resource RegisterSoundResource(File source)
+	{
+		return _project.RegisterResource(source);
+	}
+
+	/**
+	 * Returns a resource's original filename.
+	 * @param resource A resource in the current project.
+	 * @return Resource's name.
+	 */
+	public static String GetResourceName(Resource resource)
+	{
+		return _project.GetResourceName(resource);
+	}
+
+	/**
+	 * Unwinds the undo stack and deletes all subsequently unused project
+	 * resources.
+	 */
+	public static void CleanupResources()
+	{
+		while (_undoStack.size() != 0 && _undoStack.getLast() != _lastSaved)
+		{
+			Command c = _undoStack.remove(_undoStack.size() - 1);
+			c.Revert(_project);
+		}
+
+		_project.CullUnusedResources();
 	}
 }

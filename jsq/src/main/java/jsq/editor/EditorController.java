@@ -34,12 +34,14 @@ import jsq.command.InsertCue;
 import jsq.command.UpdateCueActive;
 import jsq.command.UpdateCueFollows;
 import jsq.command.UpdateCueName;
+import jsq.command.UpdateSoundResource;
 import jsq.command.UpdatedStopped;
 import jsq.cue.Cue;
 import jsq.cue.PlaySound;
 import jsq.cue.Stop;
 import jsq.cue.StoppableCue;
 import jsq.home.HomeController;
+import jsq.project.Resource;
 import jsq.stop_selector.StopSelector;
 
 
@@ -84,7 +86,7 @@ public class EditorController
 	/** JavaFX injectable initialization of the editor's GUI. */
 	public void initialize()
 	{
-		Context._stage.setTitle("JSQ: New Project");
+		Context.UpdateStageTitle();
 		new StackEmptyListener<>(Context._undoStack, _undo);
 		new StackEmptyListener<>(Context._redoStack, _redo);
 		new StackEmptyListener<>(Context._clipboard, _paste);
@@ -168,7 +170,14 @@ public class EditorController
 		{
 			_cueType.setText("Play Sound");
 			_editSubTools.getChildren().get(0).setVisible(true);
-			// ToDo: Populate these controls.
+			if (selected_size == 1)
+			{
+				PlaySound cue
+					= (PlaySound) _cueList.getSelectionModel().getSelectedItem();
+				_cueSelectedSoundFile.setText(
+					Context.GetResourceName(cue._resource));
+			}
+			else _cueSelectedSoundFile.setText("[Multiple Selected]");
 		}
 		else if (common.equals(Stop.class))
 		{
@@ -255,6 +264,7 @@ public class EditorController
 	@FXML protected void OnFileOpen()
 	{
 		if (!ConfirmSaved("open a project")) return;
+		Context.CleanupResources();
 		Context.SwitchScene(HomeController.class.getResource("home.fxml"));		
 	}
 
@@ -286,8 +296,10 @@ public class EditorController
 	 * is project is unsaved.
 	 */
 	@FXML protected void OnFileQuit() throws Exception
+	// ToDo: Intercept the event fired when the close button is triggered.
 	{
 		if (!ConfirmSaved("exit JSQ")) return;
+		Context.CleanupResources();
 		Platform.exit();
 	}
 
@@ -520,7 +532,10 @@ public class EditorController
 		Context.Apply(command);
 	}
 
-	/**  */
+	/**
+	 * Updates the sound resources of all selected PlaySound cues. The user is
+	 * shown a file selection dialog to select the file.
+	 */
 	@FXML protected void OnSelectSoundFile()
 	{
 		FileChooser chooser = new FileChooser();
@@ -530,8 +545,25 @@ public class EditorController
 			new ExtensionFilter("All Files", "*.*")
 		);
 		File file = chooser.showOpenDialog(Context._stage);
+		if (file == null) return;
+		_cueSelectedSoundFile.setText(file.getName());
+		Resource res = Context.RegisterSoundResource(file);
+		
+		Command command = null;
+		ObservableList<Cue> selected
+			= _cueList.getSelectionModel().getSelectedItems();
 
-		// ToDo: Complete this.
+		if (selected.size() == 1) command
+			= new UpdateSoundResource((PlaySound) selected.get(0), res);
+		else
+		{
+			UpdateSoundResource commands[]
+				= new UpdateSoundResource[selected.size()];
+			for (int i = 0; i < selected.size(); ++ i) commands[i]
+				= new UpdateSoundResource((PlaySound) selected.get(i), res);
+			command = new BulkCommand<UpdateSoundResource>(commands);
+		}
+		Context.Apply(command);
 	}
 
 	/** */

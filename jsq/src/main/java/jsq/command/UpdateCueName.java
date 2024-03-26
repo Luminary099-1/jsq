@@ -1,7 +1,7 @@
 package jsq.command;
 
-import jsq.Project;
 import jsq.cue.Cue;
+import jsq.project.Project;
 
 /** Command to update a cue's name. */
 public class UpdateCueName implements Command

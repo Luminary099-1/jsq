@@ -3,9 +3,9 @@ package jsq.command;
 import java.util.ArrayList;
 import java.util.List;
 
-import jsq.Project;
 import jsq.cue.Stop;
 import jsq.cue.StoppableCue;
+import jsq.project.Project;
 
 
 /** Command to update a stop cue's targets. */
@@ -15,7 +15,7 @@ public class UpdatedStopped implements Command
 	Stop _cue;
 	/** New targets to assign to the cue. */
 	ArrayList<StoppableCue> _newTargets;
-	/** The cue's already assigned targets. */
+	/** Cue's already assigned targets. */
 	ArrayList<StoppableCue> _oldTargets;
 
 	/**

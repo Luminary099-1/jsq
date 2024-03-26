@@ -1,6 +1,6 @@
 package jsq.command;
 
-import jsq.Project;
+import jsq.project.Project;
 
 
 /** Base type to implement the command design pattern to manipulate cues. */

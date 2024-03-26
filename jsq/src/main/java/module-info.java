@@ -3,6 +3,8 @@ module jsq
     requires transitive javafx.controls;
     requires javafx.fxml;
     requires org.json;
+    requires org.apache.commons.codec;
+    requires org.apache.commons.io;
 
     opens jsq to javafx.fxml;
     opens jsq.home to javafx.fxml;

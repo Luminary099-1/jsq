@@ -1,14 +1,15 @@
 package jsq.command;
 
-import jsq.Project;
 import jsq.cue.Cue;
+import jsq.cue.PlaySound;
+import jsq.project.Project;
 
 
 /** Command to "delete" a cue. */
 public class DeleteCue implements Command
 {
-	/** Stores the "deleted" cue. */
-	protected Cue _deleted;
+	/** Cue to "delete". */
+	protected Cue _cue;
 	/** The index of the "deleted" cue. */
 	protected int _index;
 
@@ -23,12 +24,21 @@ public class DeleteCue implements Command
 
 	@Override public void Apply(Project p)
 	{
-		_deleted = p._cueList.remove(_index);
+		_cue = p._cueList.remove(_index);
+		if (_cue instanceof PlaySound)
+		{
+			PlaySound ps = (PlaySound) _cue;
+			if (ps._resource != null) p.DisposeResource(ps._resource);
+		}
 	}
 
 	@Override public void Revert(Project p)
 	{
-		p._cueList.add(_index, _deleted);
+		p._cueList.add(_index, _cue);
+		if (_cue instanceof PlaySound)
+		{
+			PlaySound ps = (PlaySound) _cue;
+			if (ps._resource != null) p.UseResource(ps._resource);
+		}
 	}
-	
 }

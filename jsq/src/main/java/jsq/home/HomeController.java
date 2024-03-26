@@ -44,7 +44,7 @@ public class HomeController
 		boolean has_sounds = false;
 		for (File child : children)
 		{
-			if (child.isDirectory() && child.getName().equals("sounds"))
+			if (child.isDirectory() && child.getName().equals("resources"))
 				has_sounds = true;
 			else if (child.isFile() && child.getName().equals("data.jsq"))
 				has_data = true;
@@ -55,6 +55,7 @@ public class HomeController
 	
 	/** JavaFX injectable initialization of the editor's GUI. */
 	public void initialize()
+	// ToDo: Ensure the workspace list is updated when returning from the editor.
 	{
 		Context._stage.setTitle("JSQ: Home");
 		_recentProjects = FXCollections.observableArrayList();
@@ -72,7 +73,7 @@ public class HomeController
 	{
 		MultipleSelectionModel<File> sm = _workspaceList.getSelectionModel();
 		if (sm.isEmpty()) return;
-		Context._file = sm.getSelectedItem();
+		Context._folder = sm.getSelectedItem();
 		try { Context.Load();}
 		catch (Exception e) { e.printStackTrace(); }
 		Context.SwitchScene(EditorController.class.getResource("editor.fxml"));
@@ -93,6 +94,7 @@ public class HomeController
 	{
 		File project_dir
 			= new File(Context._workspace, _createNameField.getText());
+
 		if (project_dir.isDirectory())
 		{
 			Alert alert = new Alert(AlertType.ERROR);
@@ -117,7 +119,7 @@ public class HomeController
 			return;
 		}
 
-		Context._file = project_dir;
+		Context._folder = project_dir;
 		Context.SwitchScene(EditorController.class.getResource("editor.fxml"));
 	}
 }
