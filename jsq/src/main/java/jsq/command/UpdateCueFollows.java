@@ -7,11 +7,11 @@ import jsq.project.Project;
 public class UpdateCueFollows implements Command
 {
 	/** Cue to rename. */
-	Cue _cue;
+	protected final Cue _cue;
 	/** Cue's new follows flag. */
-	boolean _newFlag;
+	protected final boolean _newFlag;
 	/** Stores the cue's previous follows flag. */
-	boolean _oldFlag;
+	protected final boolean _oldFlag;
 
 	/**
 	 * Creates a new instance of UpdateCueFollows.

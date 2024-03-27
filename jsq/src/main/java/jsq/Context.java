@@ -238,8 +238,8 @@ public class Context
 		if (is_cut)
 		{
 			DeleteCue[] delete_commands = new DeleteCue[_clipboard.size()];
-			for (Integer i : selected)
-				delete_commands[i] = new DeleteCue(selected.get(i));
+			for (Integer i : selected.reversed())
+				delete_commands[i] = new DeleteCue(i, _project._cueList.get(i));
 			Apply(new BulkCommand<DeleteCue>(delete_commands));
 		}
 	}

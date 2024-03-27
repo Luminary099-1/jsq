@@ -8,7 +8,7 @@ public class BulkCommand<T extends Command> implements Command
 // ToDo: Consider refactoring this to use array lists instead of arrays.
 {
 	/** Stores the commands applied in bulk by this command. */
-	T[] _commands;
+	protected final T[] _commands;
 
 	/**
 	 * Creates a new bulk command.

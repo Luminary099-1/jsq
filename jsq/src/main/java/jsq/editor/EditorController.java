@@ -354,17 +354,15 @@ public class EditorController
 	 * deletion is performed separately.
 	 */
 	@FXML protected void OnDelete()
+	// ToDo: Convert to use bulk commands?
 	{
 		MultipleSelectionModel<Cue> sm = _cueList.getSelectionModel();
-		ObservableList<Integer> selected = sm.getSelectedIndices();
-		
-		for (int i = selected.size() - 1; i >= 0; -- i)
+
+		for (Integer i : sm.getSelectedIndices().reversed())
 		{
-			DeleteCue command = new DeleteCue(selected.get(i));
+			DeleteCue command = new DeleteCue(i, _cueList.getItems().get(i));
 			Context.Apply(command);
 		}
-
-		sm.clearSelection();
 	}
 
 	/** Selects all elements in the cue list. */

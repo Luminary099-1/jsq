@@ -8,9 +8,9 @@ import jsq.project.Project;
 public class InsertCue implements Command
 {
 	/** Index to insert the new cue into the list. */
-	int _index;
+	protected final int _index;
 	/** Cue to be inserted into the list. */
-	Cue _cue;
+	protected final Cue _cue;
 
 	/**
 	 * Creates an instance of InsertCue.

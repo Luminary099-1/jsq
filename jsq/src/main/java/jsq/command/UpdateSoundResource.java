@@ -9,11 +9,11 @@ import jsq.project.Resource;
 public class UpdateSoundResource implements Command
 {
 	/** Cue to update. */
-	protected PlaySound _cue;
+	protected final PlaySound _cue;
 	/** New sound resource to assign to the cue. */
-	protected Resource _newResource;
+	protected final Resource _newResource;
 	/** Cue's already assigned sound resource. */
-	protected Resource _oldResource;
+	protected final Resource _oldResource;
 
 	/**
 	 * Creates a new command to update a sound cue's sound resource.

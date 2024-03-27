@@ -7,11 +7,11 @@ import jsq.project.Project;
 public class UpdateCueName implements Command
 {
 	/** Cue to rename. */
-	Cue _cue;
+	protected final Cue _cue;
 	/** Cue's new name. */
-	String _newName;
+	protected final String _newName;
 	/** Stores the cue's previous name. */
-	String _oldName;
+	protected final String _oldName;
 
 	/**
 	 * Creates a new instance of UpdateCueName.

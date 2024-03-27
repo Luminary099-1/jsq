@@ -12,11 +12,11 @@ import jsq.project.Project;
 public class UpdatedStopped implements Command
 {
 	/** Cue to update. */
-	Stop _cue;
+	protected final Stop _cue;
 	/** New targets to assign to the cue. */
-	ArrayList<StoppableCue> _newTargets;
+	protected final ArrayList<StoppableCue> _newTargets;
 	/** Cue's already assigned targets. */
-	ArrayList<StoppableCue> _oldTargets;
+	protected final ArrayList<StoppableCue> _oldTargets;
 
 	/**
 	 * Creates new command to update the stop targets of a stop cue.
