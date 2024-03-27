@@ -8,9 +8,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.nio.file.Files;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -23,11 +21,14 @@ import jsq.cue.Cue;
 
 /** Represents the project, containing cues and related settings. */
 public class Project
+// FixMe: Refactor to hide the cue list and make it a parameter for construction.
 {
-	/** Stores the project's cue list. */ // ToDo: Make this protected.
+	/** Stores the project's cue list. */
 	public ObservableList<Cue> _cueList = FXCollections.observableArrayList();
 	/** Maps the location of resources in the project to their metadata. */
-	static Map<Resource, Metadata> _resources = new HashMap<>();
+	protected Map<Resource, Metadata> _resources = new HashMap<>();
+	/** Maps source files to cache data to avoid hashing duplicate resources. */
+	protected Map<File, CacheData> _importCache = new HashMap<>();
 
 	/**
 	 * Clears this project's contents without invalidating relationships with
@@ -37,9 +38,8 @@ public class Project
 	{
 		_cueList.clear();
 		_resources.clear();
+		_importCache.clear();
 	}
-
-	// ToDo: Determine if the methods below fail to preserve "shared" instances.
 
 	/**
 	 * Essentially implements writeObject() to override the serialization
@@ -72,9 +72,9 @@ public class Project
 	@SuppressWarnings("unchecked") public void ReadObject(ObjectInputStream in)
 		throws ClassNotFoundException, IOException
 	{
-		int size = in.readInt();
 		_cueList.clear();
-		for (int i = 0; i < size; ++ i) _cueList.add((Cue) in.readObject());
+		int size = in.readInt();
+		while (-- size >= 0) _cueList.add((Cue) in.readObject());
 		
 		_resources = (HashMap<Resource, Metadata>) in.readObject();
 	}
@@ -86,8 +86,11 @@ public class Project
 	 * @return The newly incorporated resource.
 	 */
 	public Resource RegisterResource(File source)
-	// ToDo: Cache paths imported during the session to avoid hashing twice.
 	{
+		// Look up the source in the cache first and return it if found:
+		CacheData cd = _importCache.get(source);
+		if (cd != null && cd.TestMatch(source)) return cd._resource;
+	
 		try (FileInputStream is = new FileInputStream(source))
 		{
 			String file_str = String.format(
@@ -101,6 +104,8 @@ public class Project
 			{
 				Files.copy(source.toPath(), resource.toPath());
 				_resources.put(resource, data);
+				// Cache the resource for future imports of the same file:
+				_importCache.put(source, new CacheData(source, resource));
 			}
 			return resource;
 		}
@@ -158,11 +163,10 @@ public class Project
 	 */
 	public void CullUnusedResources()
 	{
-		Iterator<Entry<Resource, Metadata>> it
-			= _resources.entrySet().iterator();
+		var it = _resources.entrySet().iterator();
 		for (; it.hasNext();)
 		{
-			Entry<Resource, Metadata> m = it.next();
+			var m = it.next();
 			if (m.getValue()._uses == 0)
 			{
 				try { Files.delete(m.getKey().toPath()); }
@@ -189,5 +193,42 @@ class Metadata implements Serializable
 	Metadata(String name)
 	{
 		_name = name;
+	}
+}
+
+
+/** Stores information about a imported resources for caching purposes. */
+class CacheData
+{
+	/** Last time the file was modified. */
+	final long _lastModified;
+	/** Length of the file. */
+	final long _length;
+	/** File's resource in the project. */
+	final Resource _resource;
+
+	/**
+	 * Creates a new cache object for importing resources into the project.
+	 * @param source Source file of a newly created resource.
+	 * @param resource Resource created from the source file.
+	 */
+	CacheData(File source, Resource resource)
+	{
+		_lastModified = source.lastModified();
+		_length = source.length();
+		_resource = resource;
+	}
+
+	/**
+	 * Applies a heuristic to determine if the specified source matches the file
+	 * specified by this cache.
+	 * @param source File to test for a match.
+	 * @return {@code true} if source is already a resource; {@code false}
+	 * otherwise.
+	 */
+	boolean TestMatch(File source)
+	{
+		return source.lastModified() == _lastModified
+			&& source.length() == _length;
 	}
 }
