@@ -251,17 +251,13 @@ public class Context
 	 */
 	public static void Paste(int index)
 	{
-		// ToDo: Verify the destiaion is as expected.
 		InsertCue[] create_commands = new InsertCue[_clipboard.size()];
 
-		if (_cutClipboard)
-			for (int i = _clipboard.size() - 1; i >= 0; -- i)
-				create_commands[_clipboard.size() - i - 1]
-					= new InsertCue(index, _clipboard.get(i));
-		else
-			for (int i = _clipboard.size() - 1; i >= 0; -- i)
-				create_commands[_clipboard.size() - i - 1]
-					= new InsertCue(index, _clipboard.get(i).clone());
+		int i = 0;
+		if (_cutClipboard) for (Cue cue : _clipboard.reversed())
+			create_commands[i ++] = new InsertCue(index, cue);
+		else for (Cue cue : _clipboard.reversed())
+			create_commands[i ++] = new InsertCue(index, cue.clone());
 
 		Apply(new BulkCommand<InsertCue>(create_commands));
 	}

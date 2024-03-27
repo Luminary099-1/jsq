@@ -345,7 +345,7 @@ public class EditorController
 		else
 		{
 			ObservableList<Integer> selected = sm.getSelectedIndices();
-			Context.Paste(selected.get(selected.size() - 1));
+			Context.Paste(selected.get(selected.size() - 1) + 1);
 		}
 	}
 
