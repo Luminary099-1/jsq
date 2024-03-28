@@ -9,7 +9,7 @@ import jsq.project.Project;
 
 
 /** Command to update a stop cue's targets. */
-public class UpdatedStopped implements Command
+public class UpdateStopped implements Command
 {
 	/** Cue to update. */
 	protected final Stop _cue;
@@ -23,7 +23,7 @@ public class UpdatedStopped implements Command
 	 * @param cue Stop cue to update.
 	 * @param targets New set of target cues to assign to the stop cue.
 	 */
-	public UpdatedStopped(Stop cue, List<StoppableCue> targets)
+	public UpdateStopped(Stop cue, List<StoppableCue> targets)
 	{
 		_cue = cue;
 		_newTargets = new ArrayList<StoppableCue>(targets);

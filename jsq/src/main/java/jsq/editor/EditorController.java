@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiFunction;
 
 import javafx.application.Platform;
 import javafx.collections.ListChangeListener;
@@ -37,7 +38,7 @@ import jsq.command.UpdateCueActive;
 import jsq.command.UpdateCueFollows;
 import jsq.command.UpdateCueName;
 import jsq.command.UpdateSoundResource;
-import jsq.command.UpdatedStopped;
+import jsq.command.UpdateStopped;
 import jsq.cue.Cue;
 import jsq.cue.PlaySound;
 import jsq.cue.Stop;
@@ -260,6 +261,32 @@ public class EditorController
 	}
 
 	/**
+	 * Instantiates and applies commands using the provided function for
+	 * operations that reflect selections in the cue list. If multiple cues are
+	 * selected, {@link jsq.command.BulkCommand} is emitted; otherwise an
+	 * instance of {@code C} is emitted.
+	 * @param <C> Type of command being created and applied.
+	 * @param factory Functional interface to instantiate the command(s).
+	 */
+	<C extends Command>
+	void GenerateCommands(BiFunction<Cue, Integer, C> factory)
+	{
+		Command cmd = null;
+		ObservableList<Integer> selected = _sm.getSelectedIndices();
+		if (selected.size() == 1)
+			cmd = factory.apply(_sm.getSelectedItem(), _sm.getSelectedIndex());
+		else
+		{
+			List<C> cmds = new ArrayList<>(selected.size());
+			for (int i : selected) cmds.add(
+				factory.apply(_sm.getSelectedItems().get(i), i)
+			);
+			cmd = new BulkCommand<C>(cmds);
+		}
+		Context.Apply(cmd);
+	}
+
+	/**
 	 * Returns the user to the home interface. Prompts the user to verify if the
 	 * current is unsaved.
 	 */
@@ -406,23 +433,15 @@ public class EditorController
 		int num_cues = _cueList.getItems().size();
 		int destination = 0;
 
-		if (num_cues != 0)
-		{
-			if (_sm.isEmpty()) destination = num_cues - 1;
-			else
-			{
-				ObservableList<Integer> selected = _sm.getSelectedIndices();
-				destination = selected.get(selected.size() - 1) + 1;
-			}
-		}
+		if (num_cues != 0) destination = (_sm.isEmpty())
+			? num_cues - 1
+			: _sm.getSelectedIndices().getLast() + 1;
 
 		Cue cue = _newCueCombo.getValue().CreateCue();
 		InsertCue cmd = new InsertCue(destination, cue);
 		Context.Apply(cmd);
 		_sm.clearAndSelect(destination);
 	}
-
-	// ToDo: Modularize the following update methods?
 
 	/**
 	 * Updates the names of all selected cues to the newly updated value in
@@ -431,18 +450,9 @@ public class EditorController
 	@FXML protected void OnCueNameUpdated()
 	{
 		String new_name = _cueName.getText();
-		Command cmd = null;
-		ObservableList<Cue> selected = _sm.getSelectedItems();
-
-		if (selected.size() == 1)
-			cmd = new UpdateCueName(selected.get(0), new_name);
-		else
-		{
-			List<UpdateCueName> cmds = new ArrayList<>(selected.size());
-			for (Cue cue : selected) cmds.add(new UpdateCueName(cue, new_name));
-			cmd = new BulkCommand<UpdateCueName>(cmds);
-		}
-		Context.Apply(cmd);
+		GenerateCommands(
+			(c, i) -> { return new UpdateCueName(c, new_name); }
+		);
 		_cueList.refresh();
 	}
 
@@ -453,19 +463,9 @@ public class EditorController
 	@FXML protected void OnCueActiveUpdated()
 	{
 		boolean new_flag = _cueActive.isSelected();
-		Command cmd = null;
-		ObservableList<Cue> selected = _sm.getSelectedItems();
-
-		if (selected.size() == 1)
-			cmd = new UpdateCueActive(selected.get(0), new_flag);
-		else
-		{
-			List<UpdateCueActive> cmds = new ArrayList<>(selected.size());
-			for (Cue cue : selected)
-				cmds.add(new UpdateCueActive(cue, new_flag));
-			cmd = new BulkCommand<UpdateCueActive>(cmds);
-		}
-		Context.Apply(cmd);
+		GenerateCommands(
+			(c, i) -> { return new UpdateCueActive(c, new_flag); }
+		);
 		_cueList.refresh();
 	}
 
@@ -476,19 +476,9 @@ public class EditorController
 	@FXML protected void OnCueFollowsUpdated()
 	{
 		boolean new_flag = _cueFollows.isSelected();
-		Command cmd = null;
-		ObservableList<Cue> selected = _sm.getSelectedItems();
-
-		if (selected.size() == 1)
-			cmd = new UpdateCueFollows(selected.get(0), new_flag);
-		else
-		{
-			List<UpdateCueFollows> cmds = new ArrayList<>(selected.size());
-			for (Cue cue : selected)
-				cmds.add(new UpdateCueFollows(cue, new_flag));
-			cmd = new BulkCommand<UpdateCueFollows>(cmds);
-		}
-		Context.Apply(cmd);
+		GenerateCommands(
+			(c, i) -> { return new UpdateCueFollows(c, new_flag); }
+		);
 		_cueList.refresh();
 	}
 
@@ -504,20 +494,9 @@ public class EditorController
 			= StopSelector.GetSelection(_sm.getSelectedIndices().get(0));
 		if (targets == null) return;
 		SetSelectedStopText(targets);
-
-		Command cmd = null;
-		int selected_size = _sm.getSelectedItems().size();
-		if (selected_size == 1)
-			cmd = new UpdatedStopped((Stop) _sm.getSelectedItem(), targets);
-		else
-		{
-			ObservableList<Cue> selected = _sm.getSelectedItems();
-			List<UpdatedStopped> cmds = new ArrayList<>(selected.size());
-			for (Cue cue : selected)
-				cmds.add(new UpdatedStopped((Stop) cue, targets));
-			cmd = new BulkCommand<UpdatedStopped>(cmds);
-		}
-		Context.Apply(cmd);
+		GenerateCommands(
+			(c, i) -> { return new UpdateStopped((Stop) c, targets); }
+		);
 	}
 
 	/**
@@ -537,19 +516,9 @@ public class EditorController
 		_cueSelectedSoundFile.setText(file.getName());
 		Resource res = Context.RegisterSoundResource(file);
 		
-		Command cmd = null;
-		ObservableList<Cue> selected = _sm.getSelectedItems();
-
-		if (selected.size() == 1)
-			cmd = new UpdateSoundResource((PlaySound) selected.get(0), res);
-		else
-		{
-			List<UpdateSoundResource> cmds = new ArrayList<>(selected.size());
-			for (Cue cue : selected)
-				cmds.add(new UpdateSoundResource((PlaySound) cue, res));
-			cmd = new BulkCommand<UpdateSoundResource>(cmds);
-		}
-		Context.Apply(cmd);
+		GenerateCommands(
+			(c, i) -> { return new UpdateSoundResource((PlaySound) c, res); }
+		);
 	}
 
 	/** */
