@@ -21,7 +21,6 @@ import jsq.cue.Cue;
 
 /** Represents the project, containing cues and related settings. */
 public class Project
-// FixMe: Refactor to hide the cue list and make it a parameter for construction.
 {
 	/** Stores the project's cue list. */
 	public ObservableList<Cue> _cueList = FXCollections.observableArrayList();

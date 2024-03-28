@@ -3,6 +3,8 @@ package jsq.editor;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 import javafx.application.Platform;
 import javafx.collections.ListChangeListener;
@@ -82,6 +84,8 @@ public class EditorController
 	@FXML protected Button _cueSelectStopped;
 	/** Displays the targets of the selected stop cues. */
 	@FXML protected TextArea _cueSelectedStopped;
+	/** Selection model for the cue list. */
+	protected MultipleSelectionModel<Cue> _sm;
 	
 	/** JavaFX injectable initialization of the editor's GUI. */
 	public void initialize()
@@ -91,14 +95,15 @@ public class EditorController
 		new StackEmptyListener<>(Context._redoStack, _redo);
 		new StackEmptyListener<>(Context._clipboard, _paste);
 		_cueList.setItems(Context.GetCueList());
+		_sm = _cueList.getSelectionModel();
 		_cueList.setCellFactory(cue_lv -> new CueListCell());
-		_cueList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+		_sm.setSelectionMode(SelectionMode.MULTIPLE);
 		_newCueCombo.getItems().addAll(CueTypes.class.getEnumConstants());
 		_newCueCombo.setCellFactory(new_cue_lv -> new NewCueCell());
 		_newCueCombo.setButtonCell(new NewCueCell());
 		_newCueCombo.getSelectionModel().select(0);
 
-		_cueList.getSelectionModel().getSelectedItems().addListener(
+		_sm.getSelectedItems().addListener(
 			new ListChangeListener<Cue>()
 			{
 				@Override public void onChanged(Change<? extends Cue> arg0)
@@ -117,8 +122,7 @@ public class EditorController
 	protected void UpdateTools()
 	// ToDo: Refactor this mess.
 	{
-		int selected_size
-			= _cueList.getSelectionModel().getSelectedIndices().size();
+		int selected_size = _sm.getSelectedIndices().size();
 
 		_editSubTools.getChildren().forEach(c -> c.setVisible(false));
 		_cueActive.setIndeterminate(false);
@@ -137,8 +141,8 @@ public class EditorController
 		_editTools.setDisable(false);
 		if (selected_size == 1)
 		{
-			Cue cue = _cueList.getSelectionModel().getSelectedItem();
-			int cue_num = _cueList.getSelectionModel().getSelectedIndex() + 1;
+			Cue cue = _sm.getSelectedItem();
+			int cue_num = _sm.getSelectedIndex() + 1;
 			_cueNumber.setText(Integer.toString(cue_num));
 			_cueName.setText(cue._name);
 			_cueActive.setSelected(cue._active);
@@ -155,7 +159,7 @@ public class EditorController
 		}
 
 		Class common = null;
-		for (Cue cue : _cueList.getSelectionModel().getSelectedItems())
+		for (Cue cue : _sm.getSelectedItems())
 		{
 			if (common == null || common.equals(cue.getClass()))
 			{
@@ -172,8 +176,7 @@ public class EditorController
 			_editSubTools.getChildren().get(0).setVisible(true);
 			if (selected_size == 1)
 			{
-				PlaySound cue
-					= (PlaySound) _cueList.getSelectionModel().getSelectedItem();
+				PlaySound cue = (PlaySound) _sm.getSelectedItem();
 				_cueSelectedSoundFile.setText(
 					Context.GetResourceName(cue._resource));
 			}
@@ -185,7 +188,7 @@ public class EditorController
 			_editSubTools.getChildren().get(1).setVisible(true);
 			if (selected_size == 1)
 			{
-				Stop cue = (Stop) _cueList.getSelectionModel().getSelectedItem();
+				Stop cue = (Stop) _sm.getSelectedItem();
 				SetSelectedStopText(cue._targets);
 			}
 			else _cueSelectedStopped.setText("[Multiple Selected]");
@@ -252,8 +255,7 @@ public class EditorController
 	{
 		StringWriter sw = new StringWriter();
 		PrintWriter pw = new PrintWriter(sw);
-		for (StoppableCue cue : targets)
-			pw.format("%d. %s\n", 0, cue._name);
+		for (StoppableCue cue : targets) pw.format("%d. %s\n", 0, cue._name);
 		_cueSelectedStopped.setText(sw.toString());
 	}
 
@@ -321,8 +323,7 @@ public class EditorController
 	 */
 	@FXML protected void OnCut()
 	{
-		Context.CutCopy(
-			true, _cueList.getSelectionModel().getSelectedIndices());
+		Context.CutCopy(true, _sm.getSelectedIndices());
 	}
 
 	/**
@@ -330,8 +331,7 @@ public class EditorController
 	 */
 	@FXML protected void OnCopy()
 	{
-		Context.CutCopy(
-			false, _cueList.getSelectionModel().getSelectedIndices());
+		Context.CutCopy(false, _sm.getSelectedIndices());
 	}
 
 	/**
@@ -340,11 +340,10 @@ public class EditorController
 	 */
 	@FXML protected void OnPaste()
 	{
-		MultipleSelectionModel<Cue> sm = _cueList.getSelectionModel();
-		if (sm.isEmpty()) Context.Paste(_cueList.getItems().size() - 1);
+		if (_sm.isEmpty()) Context.Paste(_cueList.getItems().size() - 1);
 		else
 		{
-			ObservableList<Integer> selected = sm.getSelectedIndices();
+			ObservableList<Integer> selected = _sm.getSelectedIndices();
 			Context.Paste(selected.get(selected.size() - 1) + 1);
 		}
 	}
@@ -356,9 +355,7 @@ public class EditorController
 	@FXML protected void OnDelete()
 	// ToDo: Convert to use bulk commands?
 	{
-		MultipleSelectionModel<Cue> sm = _cueList.getSelectionModel();
-
-		for (Integer i : sm.getSelectedIndices().reversed())
+		for (Integer i : _sm.getSelectedIndices().reversed())
 		{
 			DeleteCue command = new DeleteCue(i, _cueList.getItems().get(i));
 			Context.Apply(command);
@@ -368,13 +365,13 @@ public class EditorController
 	/** Selects all elements in the cue list. */
 	@FXML protected void OnSelectAll()
 	{
-		_cueList.getSelectionModel().selectAll();
+		_sm.selectAll();
 	}
 
 	/** Deselects all elements in the cue list. */
 	@FXML protected void OnUnselectAll()
 	{
-		_cueList.getSelectionModel().clearSelection();
+		_sm.clearSelection();
 	}
 
 	/**
@@ -383,11 +380,10 @@ public class EditorController
 	 */
 	@FXML protected void OnInvertSelection()
 	{
-		MultipleSelectionModel<Cue> sm = _cueList.getSelectionModel();
 		for (int i = 0; i < _cueList.getItems().size(); ++ i)
 		{
-			if (sm.isSelected(i)) sm.clearSelection(i);
-			else sm.select(i);
+			if (_sm.isSelected(i)) _sm.clearSelection(i);
+			else _sm.select(i);
 		}
 	}
 
@@ -407,24 +403,23 @@ public class EditorController
 	 */
 	@FXML protected void OnCreate()
 	{
-		MultipleSelectionModel<Cue> sm = _cueList.getSelectionModel();
 		int num_cues = _cueList.getItems().size();
 		int destination = 0;
 
 		if (num_cues != 0)
 		{
-			if (sm.isEmpty()) destination = num_cues - 1;
+			if (_sm.isEmpty()) destination = num_cues - 1;
 			else
 			{
-				ObservableList<Integer> selected = sm.getSelectedIndices();
+				ObservableList<Integer> selected = _sm.getSelectedIndices();
 				destination = selected.get(selected.size() - 1) + 1;
 			}
 		}
 
 		Cue cue = _newCueCombo.getValue().CreateCue();
-		InsertCue command = new InsertCue(destination, cue);
-		Context.Apply(command);
-		sm.clearAndSelect(destination);
+		InsertCue cmd = new InsertCue(destination, cue);
+		Context.Apply(cmd);
+		_sm.clearAndSelect(destination);
 	}
 
 	// ToDo: Modularize the following update methods?
@@ -436,20 +431,18 @@ public class EditorController
 	@FXML protected void OnCueNameUpdated()
 	{
 		String new_name = _cueName.getText();
-		Command command = null;
-		ObservableList<Cue> selected
-			= _cueList.getSelectionModel().getSelectedItems();
+		Command cmd = null;
+		ObservableList<Cue> selected = _sm.getSelectedItems();
 
 		if (selected.size() == 1)
-			command = new UpdateCueName(selected.get(0), new_name);
+			cmd = new UpdateCueName(selected.get(0), new_name);
 		else
 		{
-			UpdateCueName commands[] = new UpdateCueName[selected.size()];
-			for (int i = 0; i < selected.size(); ++ i)
-				commands[i] = new UpdateCueName(selected.get(i), new_name);
-			command = new BulkCommand<UpdateCueName>(commands);
+			List<UpdateCueName> cmds = new ArrayList<>(selected.size());
+			for (Cue cue : selected) cmds.add(new UpdateCueName(cue, new_name));
+			cmd = new BulkCommand<UpdateCueName>(cmds);
 		}
-		Context.Apply(command);
+		Context.Apply(cmd);
 		_cueList.refresh();
 	}
 
@@ -460,20 +453,19 @@ public class EditorController
 	@FXML protected void OnCueActiveUpdated()
 	{
 		boolean new_flag = _cueActive.isSelected();
-		Command command = null;
-		ObservableList<Cue> selected
-			= _cueList.getSelectionModel().getSelectedItems();
+		Command cmd = null;
+		ObservableList<Cue> selected = _sm.getSelectedItems();
 
 		if (selected.size() == 1)
-			command = new UpdateCueActive(selected.get(0), new_flag);
+			cmd = new UpdateCueActive(selected.get(0), new_flag);
 		else
 		{
-			UpdateCueActive commands[] = new UpdateCueActive[selected.size()];
-			for (int i = 0; i < selected.size(); ++ i)
-				commands[i] = new UpdateCueActive(selected.get(i), new_flag);
-			command = new BulkCommand<UpdateCueActive>(commands);
+			List<UpdateCueActive> cmds = new ArrayList<>(selected.size());
+			for (Cue cue : selected)
+				cmds.add(new UpdateCueActive(cue, new_flag));
+			cmd = new BulkCommand<UpdateCueActive>(cmds);
 		}
-		Context.Apply(command);
+		Context.Apply(cmd);
 		_cueList.refresh();
 	}
 
@@ -484,20 +476,19 @@ public class EditorController
 	@FXML protected void OnCueFollowsUpdated()
 	{
 		boolean new_flag = _cueFollows.isSelected();
-		Command command = null;
-		ObservableList<Cue> selected
-			= _cueList.getSelectionModel().getSelectedItems();
+		Command cmd = null;
+		ObservableList<Cue> selected = _sm.getSelectedItems();
 
 		if (selected.size() == 1)
-			command = new UpdateCueFollows(selected.get(0), new_flag);
+			cmd = new UpdateCueFollows(selected.get(0), new_flag);
 		else
 		{
-			UpdateCueFollows commands[] = new UpdateCueFollows[selected.size()];
-			for (int i = 0; i < selected.size(); ++ i)
-				commands[i] = new UpdateCueFollows(selected.get(i), new_flag);
-			command = new BulkCommand<UpdateCueFollows>(commands);
+			List<UpdateCueFollows> cmds = new ArrayList<>(selected.size());
+			for (Cue cue : selected)
+				cmds.add(new UpdateCueFollows(cue, new_flag));
+			cmd = new BulkCommand<UpdateCueFollows>(cmds);
 		}
-		Context.Apply(command);
+		Context.Apply(cmd);
 		_cueList.refresh();
 	}
 
@@ -509,25 +500,24 @@ public class EditorController
 	 */
 	@FXML protected void OnSelectStopCues()
 	{
-		MultipleSelectionModel<Cue> sm = _cueList.getSelectionModel();
 		ObservableList<StoppableCue> targets
-			= StopSelector.GetSelection(sm.getSelectedIndices().get(0));
+			= StopSelector.GetSelection(_sm.getSelectedIndices().get(0));
 		if (targets == null) return;
 		SetSelectedStopText(targets);
 
-		Command command = null;
-		int selected_size = sm.getSelectedItems().size();
+		Command cmd = null;
+		int selected_size = _sm.getSelectedItems().size();
 		if (selected_size == 1)
-			command = new UpdatedStopped((Stop) sm.getSelectedItem(), targets);
+			cmd = new UpdatedStopped((Stop) _sm.getSelectedItem(), targets);
 		else
 		{
-			ObservableList<Cue> selected = sm.getSelectedItems();
-			UpdatedStopped commands[] = new UpdatedStopped[selected_size];
-			for (int i = 0; i < selected_size; ++ i) commands[i]
-				= new UpdatedStopped((Stop) selected.get(i), targets);
-			command = new BulkCommand<UpdatedStopped>(commands);
+			ObservableList<Cue> selected = _sm.getSelectedItems();
+			List<UpdatedStopped> cmds = new ArrayList<>(selected.size());
+			for (Cue cue : selected)
+				cmds.add(new UpdatedStopped((Stop) cue, targets));
+			cmd = new BulkCommand<UpdatedStopped>(cmds);
 		}
-		Context.Apply(command);
+		Context.Apply(cmd);
 	}
 
 	/**
@@ -547,21 +537,19 @@ public class EditorController
 		_cueSelectedSoundFile.setText(file.getName());
 		Resource res = Context.RegisterSoundResource(file);
 		
-		Command command = null;
-		ObservableList<Cue> selected
-			= _cueList.getSelectionModel().getSelectedItems();
+		Command cmd = null;
+		ObservableList<Cue> selected = _sm.getSelectedItems();
 
-		if (selected.size() == 1) command
-			= new UpdateSoundResource((PlaySound) selected.get(0), res);
+		if (selected.size() == 1)
+			cmd = new UpdateSoundResource((PlaySound) selected.get(0), res);
 		else
 		{
-			UpdateSoundResource commands[]
-				= new UpdateSoundResource[selected.size()];
-			for (int i = 0; i < selected.size(); ++ i) commands[i]
-				= new UpdateSoundResource((PlaySound) selected.get(i), res);
-			command = new BulkCommand<UpdateSoundResource>(commands);
+			List<UpdateSoundResource> cmds = new ArrayList<>(selected.size());
+			for (Cue cue : selected)
+				cmds.add(new UpdateSoundResource((PlaySound) cue, res));
+			cmd = new BulkCommand<UpdateSoundResource>(cmds);
 		}
-		Context.Apply(command);
+		Context.Apply(cmd);
 	}
 
 	/** */

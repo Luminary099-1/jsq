@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -237,10 +239,10 @@ public class Context
 		_cutClipboard = is_cut;
 		if (is_cut)
 		{
-			DeleteCue[] delete_commands = new DeleteCue[_clipboard.size()];
+			List<DeleteCue> del_commands = new ArrayList<>(_clipboard.size());
 			for (Integer i : selected.reversed())
-				delete_commands[i] = new DeleteCue(i, _project._cueList.get(i));
-			Apply(new BulkCommand<DeleteCue>(delete_commands));
+				del_commands.add(new DeleteCue(i, _project._cueList.get(i)));
+			Apply(new BulkCommand<DeleteCue>(del_commands));
 		}
 	}
 
@@ -251,15 +253,16 @@ public class Context
 	 */
 	public static void Paste(int index)
 	{
-		InsertCue[] create_commands = new InsertCue[_clipboard.size()];
+		List<InsertCue> ins_commands = new ArrayList<>(_clipboard.size());
 
-		int i = 0;
-		if (_cutClipboard) for (Cue cue : _clipboard.reversed())
-			create_commands[i ++] = new InsertCue(index, cue);
-		else for (Cue cue : _clipboard.reversed())
-			create_commands[i ++] = new InsertCue(index, cue.clone());
+		if (_cutClipboard)
+			for (Cue cue : _clipboard.reversed())
+				ins_commands.add(new InsertCue(index, cue));
+		else 
+			for (Cue cue : _clipboard.reversed())
+				ins_commands.add(new InsertCue(index, cue.clone()));
 
-		Apply(new BulkCommand<InsertCue>(create_commands));
+		Apply(new BulkCommand<InsertCue>(ins_commands));
 	}
 
 	/**
