@@ -55,7 +55,6 @@ public class HomeController
 	
 	/** JavaFX injectable initialization of the editor's GUI. */
 	public void initialize()
-	// ToDo: Ensure the workspace list is updated when returning from the editor.
 	{
 		Context._stage.setTitle("JSQ: Home");
 		_recentProjects = FXCollections.observableArrayList();

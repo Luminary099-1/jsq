@@ -8,8 +8,13 @@ import java.util.List;
 import java.util.function.BiFunction;
 
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.collections.WeakListChangeListener;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
@@ -37,6 +42,7 @@ import jsq.command.InsertCue;
 import jsq.command.UpdateCueActive;
 import jsq.command.UpdateCueFollows;
 import jsq.command.UpdateCueName;
+import jsq.command.UpdateCueNotes;
 import jsq.command.UpdateSoundResource;
 import jsq.command.UpdateStopped;
 import jsq.cue.Cue;
@@ -87,14 +93,35 @@ public class EditorController
 	@FXML protected TextArea _cueSelectedStopped;
 	/** Selection model for the cue list. */
 	protected MultipleSelectionModel<Cue> _sm;
+	/** Dirty bit indicating {@code _cueNotes} has been modified. */
+	protected boolean _deltaNotes = false;
 	
+	/**
+	 * Adds a listener to the specified list that disables a menu item when the
+	 * list (stacK) is empty.
+	 * @param <T> Element type of the stack.
+	 * @param stack Stack to observe.
+	 * @param target Menu item to enable when the stack is non-empty and disable
+	 * when empty.
+	 */
+	protected <T>
+	void CreateStackEmptyListener(ObservableList<T> stack, MenuItem target)
+	{
+		ListChangeListener<T> lcl = new ListChangeListener<>()
+		{
+			@Override public void onChanged(Change<? extends T> change)
+			{
+				if (change.getList().isEmpty()) target.setDisable(true);
+				else target.setDisable(false);
+			}	
+		};
+		stack.addListener(new WeakListChangeListener<>(lcl));
+	}
+
 	/** JavaFX injectable initialization of the editor's GUI. */
 	public void initialize()
 	{
 		Context.UpdateStageTitle();
-		new StackEmptyListener<>(Context._undoStack, _undo);
-		new StackEmptyListener<>(Context._redoStack, _redo);
-		new StackEmptyListener<>(Context._clipboard, _paste);
 		_cueList.setItems(Context.GetCueList());
 		_sm = _cueList.getSelectionModel();
 		_cueList.setCellFactory(cue_lv -> new CueListCell());
@@ -104,13 +131,36 @@ public class EditorController
 		_newCueCombo.setButtonCell(new NewCueCell());
 		_newCueCombo.getSelectionModel().select(0);
 
-		_sm.getSelectedItems().addListener(
-			new ListChangeListener<Cue>()
-			{
-				@Override public void onChanged(Change<? extends Cue> arg0)
-				{ UpdateTools(); }
-			}
-		);
+		CreateStackEmptyListener(Context._undoStack, _undo);
+		CreateStackEmptyListener(Context._redoStack, _redo);
+		CreateStackEmptyListener(Context._clipboard, _paste);
+
+		ListChangeListener<Cue> lcl = new ListChangeListener<>()
+		{
+			@Override public void onChanged(Change<? extends Cue> change)
+			{ UpdateTools(); }
+		};
+		_sm.getSelectedItems().addListener(new WeakListChangeListener<>(lcl));
+
+		InvalidationListener il = new InvalidationListener()
+		{
+			@Override public void invalidated(Observable observable)
+			{ _deltaNotes = true; }			
+		};
+		_cueNotes.textProperty().addListener(il);
+
+		// ToDo: Implement the below in a satisfactory way:
+		// ChangeListener<Boolean> cl = new ChangeListener<>()
+		// {
+		// 	@Override public void changed(
+		// 		ObservableValue<? extends Boolean> f, Boolean old, Boolean cur)
+		// 	{
+		// 		if (cur || !_deltaNotes) return;
+		// 		UpdateCueNotes();
+		// 		_deltaNotes = false;
+		// 	}
+		// };
+		// _cueNotes.focusedProperty().addListener(cl);
 	}
 
 	/**
@@ -128,6 +178,7 @@ public class EditorController
 		_editSubTools.getChildren().forEach(c -> c.setVisible(false));
 		_cueActive.setIndeterminate(false);
 		_cueFollows.setIndeterminate(false);
+
 		if (selected_size == 0)
 		{
 			_editTools.setDisable(true);
@@ -268,7 +319,7 @@ public class EditorController
 	 * @param <C> Type of command being created and applied.
 	 * @param factory Functional interface to instantiate the command(s).
 	 */
-	<C extends Command>
+	protected <C extends Command>
 	void GenerateCommands(BiFunction<Cue, Integer, C> factory)
 	{
 		Command cmd = null;
@@ -284,6 +335,18 @@ public class EditorController
 			cmd = new BulkCommand<C>(cmds);
 		}
 		Context.Apply(cmd);
+	}
+
+	/**
+	 * Updates the notes of all selected cues to the newly updated value in
+	 * {@code _cueNotes}.
+	 */
+	protected void UpdateCueNotes()
+	{
+		String new_notes = _cueNotes.getText();
+		GenerateCommands(
+			(c, i) -> { return new UpdateCueNotes(c, new_notes); }
+		);
 	}
 
 	/**
@@ -380,13 +443,10 @@ public class EditorController
 	 * deletion is performed separately.
 	 */
 	@FXML protected void OnDelete()
-	// ToDo: Convert to use bulk commands?
 	{
-		for (Integer i : _sm.getSelectedIndices().reversed())
-		{
-			DeleteCue command = new DeleteCue(i, _cueList.getItems().get(i));
-			Context.Apply(command);
-		}
+		GenerateCommands(
+			(c, i) -> { return new DeleteCue(i, c); }
+		);
 	}
 
 	/** Selects all elements in the cue list. */
@@ -482,8 +542,6 @@ public class EditorController
 		_cueList.refresh();
 	}
 
-	// ToDo: Implement handler to update cue notes.
-
 	/**
 	 * Updates the targetted cues of all selected Stop cues. The user is shown
 	 * a dialog to select which cues to target.
@@ -531,31 +589,5 @@ public class EditorController
 	@FXML protected void OnGo()
 	{
 		// ToDo:
-	}
-}
-
-
-/** Listener to disable {@code MenuItem}s when observed lists are empty. */
-class StackEmptyListener<T> implements ListChangeListener<T>
-{
-	/** The menu item to be disabled when the stack is empty. */
-	protected MenuItem _target;
-
-	/**
-	 * Creates a listener to disable a menu item when a list is empty.
-	 * @param list The list to listen to.
-	 * @param target The item to be disabled when the list is empty.
-	 */
-	public StackEmptyListener(ObservableList<T> list, MenuItem target)
-	{
-		_target = target;
-		list.addListener(this);
-	}
-
-	/** When the list is updated, disables _target if the list is empty. */
-	@Override public void onChanged(Change<? extends T> change)
-	{
-		if (change.getList().isEmpty()) _target.setDisable(true);
-		else _target.setDisable(false);
 	}
 }

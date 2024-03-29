@@ -57,7 +57,6 @@ public class Context
 	 */
 	public static void SwitchScene(URL fxml)
 	{
-		_stage.hide();
 		FXMLLoader loader = new FXMLLoader(fxml);
 		Parent root = null;
 		
@@ -69,6 +68,7 @@ public class Context
 		double height = old != null ? old.getHeight() : 720;
 		
 		Scene scene = new Scene(root, width, height);
+		_stage.hide();
 		_stage.setScene(scene);
 		_stage.show();
 	}
