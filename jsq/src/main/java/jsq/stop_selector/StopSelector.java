@@ -1,6 +1,8 @@
 package jsq.stop_selector;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -9,6 +11,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.ListView;
+import javafx.scene.control.MultipleSelectionModel;
 import javafx.scene.control.SelectionMode;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -19,7 +22,6 @@ import jsq.cue.StoppableCue;
 
 /** Modal to select cues to set the target of a {@link jsq.cue.Stop}. */
 public class StopSelector extends Stage
-// ToDo: Preselect the stop cue's already selected cues (for a single stop cue selection).
 {	
 	/** Cue list for the selection of stop targets. */
 	@FXML protected ListView<Cue> _cueList;
@@ -59,15 +61,24 @@ public class StopSelector extends Stage
 
 	/**
 	 * Prompt the user to select the targets for stop cues.
-	 * @param stopping_index The index of the first stop cue to target.
-	 * @return The cues the user selected to stop. If null, the user did not
-	 * make a selection.
+	 * @param stopping_index Index of the first stop cue to target.
+	 * @param prev_targets List of targets already selected by the stop cue.
+	 * @return Cues the user selected to stop. If null, the user did not make a
+	 * selection.
 	 */
-	public static ObservableList<StoppableCue> GetSelection(int stopping_index)
+	public static ArrayList<StoppableCue>
+	GetSelection(int stopping_index, List<StoppableCue> prev_targets)
 	{
-		StopSelector selector = new StopSelector(stopping_index);
-		selector.showAndWait();
-		return selector._selection;
+		StopSelector sel = new StopSelector(stopping_index);
+		if (prev_targets != null)
+		{
+			MultipleSelectionModel<Cue> sm = sel._cueList.getSelectionModel();
+			prev_targets.forEach((c) -> {sm.select(c); });
+		}
+		sel.showAndWait();
+		return (sel._selection != null)
+			? new ArrayList<>(sel._selection)
+			: null;
 	}
 
 	/** Store the user's selection. */

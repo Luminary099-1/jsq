@@ -10,8 +10,6 @@ import java.util.function.BiFunction;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.WeakListChangeListener;
@@ -228,6 +226,7 @@ public class EditorController
 			_editSubTools.getChildren().get(0).setVisible(true);
 			if (selected_size == 1)
 			{
+				// FixMe: Miscast Stop cue when undoing its creation while selected.
 				PlaySound cue = (PlaySound) _sm.getSelectedItem();
 				_cueSelectedSoundFile.setText(
 					Context.GetResourceName(cue._resource));
@@ -304,6 +303,7 @@ public class EditorController
 	 * @param targets List of cues to display. 
 	 */
 	protected void SetSelectedStopText(Iterable<StoppableCue> targets)
+	// ToDo: Implement flexible cue numbering and replace the 0 here.
 	{
 		StringWriter sw = new StringWriter();
 		PrintWriter pw = new PrintWriter(sw);
@@ -490,11 +490,8 @@ public class EditorController
 	 */
 	@FXML protected void OnCreate()
 	{
-		int num_cues = _cueList.getItems().size();
-		int destination = 0;
-
-		if (num_cues != 0) destination = (_sm.isEmpty())
-			? num_cues - 1
+		int destination = (_sm.isEmpty())
+			? _cueList.getItems().size()
 			: _sm.getSelectedIndices().getLast() + 1;
 
 		Cue cue = _newCueCombo.getValue().CreateCue();
@@ -548,8 +545,11 @@ public class EditorController
 	 */
 	@FXML protected void OnSelectStopCues()
 	{
-		ObservableList<StoppableCue> targets
-			= StopSelector.GetSelection(_sm.getSelectedIndices().get(0));
+		List<StoppableCue> old_targets = (_sm.getSelectedItems().size() == 1)
+			? ((Stop) _sm.getSelectedItem())._targets
+			: null;
+		List<StoppableCue> targets = StopSelector.GetSelection(
+			_sm.getSelectedIndices().getFirst(), old_targets);
 		if (targets == null) return;
 		SetSelectedStopText(targets);
 		GenerateCommands(
