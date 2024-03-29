@@ -1,6 +1,7 @@
 package jsq.editor;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import javafx.beans.Observable;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.WeakListChangeListener;
+import javafx.event.WeakEventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
@@ -31,6 +33,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
+import javafx.stage.WindowEvent;
 import jsq.Context;
 import jsq.CueTypes;
 import jsq.command.BulkCommand;
@@ -159,6 +162,13 @@ public class EditorController
 		// 	}
 		// };
 		// _cueNotes.focusedProperty().addListener(cl);
+
+		WeakEventHandler<WindowEvent> weh = new WeakEventHandler<>(
+			(e) -> {
+				if (!ConfirmSaved("exiting JSQ")) e.consume();
+				else Context.CleanupResources();
+			});
+		Context._stage.setOnCloseRequest(weh);
 	}
 
 	/**
@@ -283,18 +293,24 @@ public class EditorController
 	 */
 	protected boolean ConfirmSaved(String action)
 	{
-		// ToDo: Add the option to save the current file.
 		if (Context.IsSaved()) return true;
 
-		// ToDo: Ideally the cancel button should have focus by default.
 		Alert alert = new Alert(AlertType.CONFIRMATION);
+		alert.getButtonTypes().setAll(
+			ButtonType.YES, ButtonType.NO, ButtonType.CANCEL);
 		alert.setTitle("Warning: There are unsaved changes.");
 		alert.setHeaderText(null);
 		alert.setContentText(String.format(
-			"Are you sure you want to %s without saving?", action));
+			"Save the project before %s?", action));
 
-		if (alert.showAndWait().get() == ButtonType.OK) return true;
-		else return false;
+		ButtonType type = alert.showAndWait().get();
+		if (type == ButtonType.YES)
+		{
+			try { Context.Save(); }
+			catch (IOException e) { e.printStackTrace(); }
+			return true;
+		}
+		return type == ButtonType.NO;
 	}
 
 	/**
@@ -355,7 +371,7 @@ public class EditorController
 	 */
 	@FXML protected void OnFileOpen()
 	{
-		if (!ConfirmSaved("open a project")) return;
+		if (!ConfirmSaved("opening a project")) return;
 		Context.CleanupResources();
 		Context.SwitchScene(HomeController.class.getResource("home.fxml"));		
 	}
@@ -387,10 +403,9 @@ public class EditorController
 	 * Exits the application. Prompts the user to verify if the current project
 	 * is project is unsaved.
 	 */
-	@FXML protected void OnFileQuit() throws Exception
-	// ToDo: Intercept the event fired when the close button is triggered.
+	@FXML protected void OnFileQuit()
 	{
-		if (!ConfirmSaved("exit JSQ")) return;
+		if (!ConfirmSaved("exiting JSQ")) return;
 		Context.CleanupResources();
 		Platform.exit();
 	}
