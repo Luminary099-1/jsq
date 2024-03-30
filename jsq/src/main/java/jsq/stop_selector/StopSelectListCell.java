@@ -27,7 +27,6 @@ public class StopSelectListCell extends ListCell<Cue>
 	/** Loads the custom graphic for this cell. */
 	protected FXMLLoader _loader = null;
 	
-	// ToDo: Ideally, this is a bool with the comparison in the constructor, but getIndex() is invalid until the initialization phase.
 	/** Index of the first stop cue whose targets are being selected. */
 	int _stoppingIndex;
 

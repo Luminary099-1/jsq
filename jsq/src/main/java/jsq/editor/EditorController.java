@@ -390,13 +390,15 @@ public class EditorController
 	/** */
 	@FXML protected void OnFileRevert()
 	{
-		// ToDo:
+		// ToDo: Implement OnFileRevert().
+		throw new UnsupportedOperationException("Unimplemented method 'OnFileRevert'");
 	}
 
 	/** */
 	@FXML protected void OnFilePreferences()
 	{
-		// ToDo:
+		// ToDo: Implement OnFilePreferences().
+		throw new UnsupportedOperationException("Unimplemented method 'OnFilePreferences'");
 	}
 
 	/**
@@ -492,7 +494,8 @@ public class EditorController
 	/** */
 	@FXML protected void OnHelpAbout()
 	{
-		// ToDo:
+		// ToDo: Implement OnHelpAbout().
+		throw new UnsupportedOperationException("Unimplemented method 'OnHelpAbout'");
 	}
 
 	/**
@@ -597,12 +600,14 @@ public class EditorController
 	/** */
 	@FXML protected void OnBack()
 	{
-		// ToDo:
+		// ToDo: Implement OnBack().
+		throw new UnsupportedOperationException("Unimplemented method 'OnBack'");
 	}
 
 	/** */
 	@FXML protected void OnGo()
 	{
-		// ToDo:
+		// ToDo: Implement OnGo().
+		throw new UnsupportedOperationException("Unimplemented method 'OnGo'");
 	}
 }
