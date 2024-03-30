@@ -5,7 +5,7 @@ import jsq.project.Project;
 
 
 /** Command to update the notes associated with a cue. */
-public class UpdateCueNotes implements Command
+public class UpdateCueNotes extends Command
 {
 	/** Cue to update. */
 	protected final Cue _cue;
@@ -29,11 +29,13 @@ public class UpdateCueNotes implements Command
 
 	@Override public void Apply(Project p)
 	{
+		super.Apply(p);
 		_cue._notes = _newNotes;
 	}
 
 	@Override public void Revert(Project p)
 	{
+		super.Revert(p);
 		_cue._notes = _oldNotes;
 	}
 }

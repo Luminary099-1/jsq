@@ -6,7 +6,7 @@ import jsq.project.Resource;
 
 
 /** Command to update a sound cue's sound resource. */
-public class UpdateSoundResource implements Command
+public class UpdateSoundResource extends Command
 {
 	/** Cue to update. */
 	protected final PlaySound _cue;
@@ -29,6 +29,7 @@ public class UpdateSoundResource implements Command
 
 	@Override public void Apply(Project p)
 	{
+		super.Apply(p);
 		if (_oldResource != null) p.DisposeResource(_oldResource);
 		p.UseResource(_newResource);
 		_cue._resource = _newResource;
@@ -36,6 +37,7 @@ public class UpdateSoundResource implements Command
 
 	@Override public void Revert(Project p)
 	{
+		super.Revert(p);
 		if (_oldResource != null) p.UseResource(_oldResource);
 		p.DisposeResource(_newResource);
 		_cue._resource = _oldResource;

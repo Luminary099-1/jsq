@@ -4,7 +4,7 @@ import jsq.cue.Cue;
 import jsq.project.Project;
 
 /** Command to update a cue's name. */
-public class UpdateCueName implements Command
+public class UpdateCueName extends Command
 {
 	/** Cue to rename. */
 	protected final Cue _cue;
@@ -27,11 +27,13 @@ public class UpdateCueName implements Command
 
 	@Override public void Apply(Project p)
 	{
+		super.Apply(p);
 		_cue._name = _newName;
 	}
 
 	@Override public void Revert(Project p)
 	{
+		super.Revert(p);
 		_cue._name = _oldName;
 	}
 }

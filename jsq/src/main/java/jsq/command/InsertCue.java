@@ -5,7 +5,7 @@ import jsq.project.Project;
 
 
 /** Command to create a new cue. */
-public class InsertCue implements Command
+public class InsertCue extends Command
 {
 	/** Index to insert the new cue into the list. */
 	protected final int _index;
@@ -25,11 +25,13 @@ public class InsertCue implements Command
 
 	@Override public void Apply(Project p)
 	{
+		super.Apply(p);
 		p._cueList.add(_index, _cue);
 	}
 
 	@Override public void Revert(Project p)
 	{
+		super.Revert(p);
 		p._cueList.remove(_index);
 	}
 }

@@ -7,7 +7,7 @@ import jsq.project.Resource;
 
 
 /** Command to "delete" a cue. */
-public class DeleteCue implements Command
+public class DeleteCue extends Command
 {
 	/** Cue to "delete". */
 	protected final Cue _cue;
@@ -31,12 +31,14 @@ public class DeleteCue implements Command
 
 	@Override public void Apply(Project p)
 	{
+		super.Apply(p);
 		p._cueList.remove(_index);
 		if (_resource != null) p.DisposeResource(_resource);
 	}
 
 	@Override public void Revert(Project p)
 	{
+		super.Revert(p);
 		p._cueList.add(_index, _cue);
 		if (_resource != null) p.UseResource(_resource);
 	}

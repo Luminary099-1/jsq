@@ -4,7 +4,7 @@ import jsq.cue.Cue;
 import jsq.project.Project;
 
 /** Command to update a cue's active flag. */
-public class UpdateCueActive implements Command
+public class UpdateCueActive extends Command
 {
 	/** Cue to rename. */
 	protected final Cue _cue;
@@ -27,11 +27,13 @@ public class UpdateCueActive implements Command
 
 	@Override public void Apply(Project p)
 	{
+		super.Apply(p);
 		_cue._active = _newFlag;
 	}
 
 	@Override public void Revert(Project p)
 	{
+		super.Revert(p);
 		_cue._active = _oldFlag;
 	}
 }

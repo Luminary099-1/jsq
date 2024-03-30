@@ -9,7 +9,7 @@ import jsq.project.Project;
 
 
 /** Command to update a stop cue's targets. */
-public class UpdateStopped implements Command
+public class UpdateStopped extends Command
 {
 	/** Cue to update. */
 	protected final Stop _cue;
@@ -32,11 +32,13 @@ public class UpdateStopped implements Command
 
 	@Override public void Apply(Project p)
 	{
+		super.Apply(p);
 		_cue._targets = _newTargets;
 	}
 
 	@Override public void Revert(Project p)
 	{
+		super.Revert(p);
 		_cue._targets = _oldTargets;
 	}
 }

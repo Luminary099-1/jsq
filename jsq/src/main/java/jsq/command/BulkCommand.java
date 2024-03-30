@@ -6,7 +6,7 @@ import jsq.project.Project;
 
 
 /** Command to apply multiple commands of the same type. */
-public class BulkCommand<T extends Command> implements Command
+public class BulkCommand<T extends Command> extends Command
 {
 	/** Stores the commands applied in bulk by this command. */
 	protected final List<T> _commands;
@@ -24,11 +24,13 @@ public class BulkCommand<T extends Command> implements Command
 
 	@Override public void Apply(Project p)
 	{
+		super.Apply(p);
 		for (T command : _commands) command.Apply(p);
 	}
 
 	@Override public void Revert(Project p)
 	{
+		super.Revert(p);
 		for (T command : _commands.reversed()) command.Revert(p);
 	}
 }

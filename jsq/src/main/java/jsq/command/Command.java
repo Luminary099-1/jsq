@@ -4,20 +4,30 @@ import jsq.project.Project;
 
 
 /** Base type to implement the command design pattern to manipulate cues. */
-public interface Command
+public abstract class Command
+// ToDo: Consider making command creation a series of statis methods in cues. This would allow cue fields to be hidden.
 {
-	// ToDo: Refactor comand creation to be returned by static methods in the affected cues. Cue fields could then be private.
-	// ToDo: Consider throwing exceptions when Apply or Revert are called out of turn.
+	protected boolean _applied = false;
 	
 	/**
-	 * Applies the prescibed change to the project.
+	 * Applies the prescibed change to the project. All overriding
+	 * implementations should call super.
 	 * @param p The instance of Project to apply the operation to.
 	 */
-	void Apply(Project p);
+	public void Apply(Project p)
+	{
+		assert !_applied : "Command applied out of turn.";
+		_applied = true;
+	}
 
 	/**
 	 * Revers the prescibed change that's already been applied to the project.
+	 * All overriding implementations should call super.
 	 * @param p The instance of Project to revert the applied operation on.
 	 */
-	void Revert(Project p);
+	public void Revert(Project p)
+	{
+		assert _applied : "Command reverted out of turn.";
+		_applied = false;
+	}
 }

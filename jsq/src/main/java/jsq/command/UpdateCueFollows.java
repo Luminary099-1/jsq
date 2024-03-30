@@ -4,7 +4,7 @@ import jsq.cue.Cue;
 import jsq.project.Project;
 
 /** Command to update a cue's follows flag. */
-public class UpdateCueFollows implements Command
+public class UpdateCueFollows extends Command
 {
 	/** Cue to rename. */
 	protected final Cue _cue;
@@ -27,11 +27,13 @@ public class UpdateCueFollows implements Command
 
 	@Override public void Apply(Project p)
 	{
+		super.Apply(p);
 		_cue._follows = _newFlag;
 	}
 
 	@Override public void Revert(Project p)
 	{
+		super.Revert(p);
 		_cue._follows = _oldFlag;
 	}
 }
