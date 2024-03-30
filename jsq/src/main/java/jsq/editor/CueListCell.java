@@ -35,8 +35,10 @@ public class CueListCell extends ListCell<Cue>
 	 * @param cue The cue represented by this cell affected by the update.
 	 * @param empty {@code true} if {@code this} represents an empty cell;
 	 * {@code false} otherwise.
+	 * @throws RuntimeException If the cell's FXML cannot be loaded.
 	 */
-	@Override protected void updateItem(Cue cue, boolean empty)
+	@Override protected void
+	updateItem(Cue cue, boolean empty) throws RuntimeException
 	{
 		super.updateItem(cue, empty);
 
@@ -52,7 +54,7 @@ public class CueListCell extends ListCell<Cue>
 				CueListCell.class.getResource("cueListCell.fxml"));
 			_loader.setController(this);
 			try { _loader.load(); }
-			catch (IOException e) { e.printStackTrace(); }
+			catch (IOException e) { throw new RuntimeException(e); }
 		}
 
 		_triangle.setText(" ");

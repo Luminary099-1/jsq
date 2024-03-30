@@ -23,8 +23,7 @@ public abstract class Cue implements Cloneable, Serializable
 	@Override public Cue clone()
 	{
 		try { return (Cue) super.clone(); }
-		catch (CloneNotSupportedException e)
-		{ throw new AssertionError("Failed clone Cloneable supertype."); }
+		catch (CloneNotSupportedException e) { throw new AssertionError(e); }
 	}
 
 	/**

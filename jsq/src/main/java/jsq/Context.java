@@ -2,6 +2,7 @@ package jsq;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -54,18 +55,17 @@ public class Context
 	 * Switches the primary application window to the interface described by the
 	 * passed FXML.
 	 * @param fxml FXML to load and display on the primary window.
+	 * @throws RuntimeException If the scenes's FXML cannot be loaded.
 	 */
-	public static void SwitchScene(URL fxml)
+	public static void SwitchScene(URL fxml) throws RuntimeException
 	{
 		FXMLLoader loader = new FXMLLoader(fxml);
 		Parent root = null;
-		
 		try { root = loader.load(); }
-		catch (IOException e) { e.printStackTrace(); }
-		
+		catch (IOException e) { throw new RuntimeException(e); }
 		Scene old = _stage.getScene();
-		double width = old != null ? old.getWidth() : 1280;
-		double height = old != null ? old.getHeight() : 720;
+		double width = (old != null) ? old.getWidth() : 1280;
+		double height = (old != null) ? old.getHeight() : 720;
 		
 		Scene scene = new Scene(root, width, height);
 		_stage.hide();
@@ -99,9 +99,8 @@ public class Context
 	/** Undoes the last applied operation. */
 	public static void Undo()
 	{
-		int undo_size = _undoStack.size();
-		if (undo_size == 0) return;
-		Command command = _undoStack.remove(undo_size - 1);
+		if (_undoStack.isEmpty()) return;
+		Command command = _undoStack.removeLast();
 		command.Revert(_project);
 		_redoStack.add(command);
 		UpdateStageTitle();
@@ -110,9 +109,8 @@ public class Context
 	/** Redoes the last undone operation. */
 	public static void Redo()
 	{
-		int redo_size = _redoStack.size();
-		if (redo_size == 0) return;
-		Command command = _redoStack.remove(redo_size - 1);
+		if (_redoStack.isEmpty()) return;
+		Command command = _redoStack.removeLast();
 		command.Apply(_project);
 		_undoStack.add(command);
 		UpdateStageTitle();
@@ -124,81 +122,104 @@ public class Context
 	 */
 	public static boolean IsSaved()
 	{
-		int undo_size = _undoStack.size();
-		if (undo_size > 0)
-		{
-			Command last_command = _undoStack.get(undo_size - 1);
-			if (last_command != _lastSaved) return false;
-		}
-		return true;
+		return _undoStack.isEmpty() || _undoStack.getLast() == _lastSaved;
 	}
 
 	/**
 	 * Creates a new, empty project directory at the specified path.
 	 * @param project_dir Path of the new directory.
-	 * @return {@code true} if the creation was successful; {@code false}
-	 * otherwise.
+	 * @throws IOException If an error occurs while initializing the project.
 	 */
-	public static boolean InitializeProjectDirectory(File project_dir)
+	public static void
+	InitializeProjectDirectory(File project_dir) throws IOException
 	{
 		project_dir.mkdir();
 		new File(project_dir, "resources").mkdir();
-
 		File project_data = new File(project_dir, "data.jsq");
 		Project empty_project = new Project();
+
 		try
+		(
+			FileOutputStream fos = new FileOutputStream(project_data);
+			ObjectOutputStream os = new ObjectOutputStream(fos)
+		)
+		{ empty_project.WriteObject(os); }
+		catch (FileNotFoundException e)
 		{
-			ObjectOutputStream os
-				= new ObjectOutputStream(new FileOutputStream(project_data));
-			empty_project.WriteObject(os);
-			os.close();
+			Errors.ErrorDialog("Failed to Initialize Project", 
+				"Unable to create a project data file.");
+			throw new IOException(e);
 		}
 		catch (IOException e)
 		{
-			e.printStackTrace();
-			return false;
+			Errors.ErrorDialog("Failed to Initialize Project", 
+				"An error occurred while initializing the project data file.");
+			throw new IOException(e);
 		}
 
 		Context.Reset();
 		_project = empty_project;
-		return true;
 	}
 
 	/**
 	 * Loads a project state into {@code _project} from the location specified
 	 * by the user.dir system variable.
-	 * @throws Exception If an error occurs reading the project.
+	 * @throws IOException If an error occurs while loading the project.
 	 */
-	public static void Load() throws Exception
+	public static void Load() throws IOException
 	{
 		Reset();
 		File data = new File(Context._folder, "data.jsq");
-		ObjectInputStream is
-			= new ObjectInputStream(new FileInputStream(data));
-		_project.ReadObject(is);
-		is.close();
+
+		try
+		(
+			FileInputStream fis = new FileInputStream(data);
+			ObjectInputStream is = new ObjectInputStream(fis)
+		)
+		{ _project.ReadObject(is); }
+		catch (FileNotFoundException e)
+		{
+			Errors.ErrorDialog("Failed to Load Project", 
+				"Unable to open the project data file.");
+			throw new IOException(e);
+		}
+		catch (IOException | ClassNotFoundException e)
+		{
+			Errors.ErrorDialog("Failed to Load Project", 
+				"An error occurred while loading the project data file.");
+			throw new IOException(e);
+		}
 	}
 
 	/**
 	 * Saves the current state of {@code _project} to the location specified by
 	 * the user.dir system variable.
-	 * @throws IOException If an error occurs writing the project.
+	 * @throws IOException If an error occurs while saving the project.
 	 */
 	public static void Save() throws IOException
 	{
-		try
-		{
-			File data = new File(Context._folder, "data.jsq");
-			ObjectOutputStream os
-				= new ObjectOutputStream(new FileOutputStream(data));
-			_project.WriteObject(os);
-			os.close();
-		}
-		catch (Exception e)
-		{ throw new IOException("Failed to save file."); }
+		File project_data = new File(Context._folder, "data.jsq");
 
-		int undo_size = _undoStack.size();
-		_lastSaved = (undo_size > 0) ? _undoStack.get(undo_size - 1) : null;
+		try
+		(
+			FileOutputStream fos = new FileOutputStream(project_data);
+			ObjectOutputStream os = new ObjectOutputStream(fos)
+		)
+		{ _project.WriteObject(os); }
+		catch (FileNotFoundException e)
+		{
+			Errors.ErrorDialog("Failed to Save Project", 
+				"Unable to open the project data file.");
+			throw new IOException(e);
+		}
+		catch (IOException e)
+		{
+			Errors.ErrorDialog("Failed to Save Project", 
+				"An error occurred while saving the project data file.");
+			throw new IOException(e);
+		}
+
+		_lastSaved = (!_undoStack.isEmpty()) ? _undoStack.getLast() : null;
 		UpdateStageTitle();
 	}
 
@@ -236,14 +257,12 @@ public class Context
 	{
 		_clipboard.clear();
 		for (Integer i : selected) _clipboard.add(_project._cueList.get(i));
-		_cutClipboard = is_cut;
-		if (is_cut)
-		{
-			List<DeleteCue> del_commands = new ArrayList<>(_clipboard.size());
-			for (Integer i : selected.reversed())
-				del_commands.add(new DeleteCue(i, _project._cueList.get(i)));
-			Apply(new BulkCommand<DeleteCue>(del_commands));
-		}
+		if (!(_cutClipboard = is_cut)) return;
+
+		List<DeleteCue> del_commands = new ArrayList<>(_clipboard.size());
+		for (Integer i : selected.reversed())
+			del_commands.add(new DeleteCue(i, _project._cueList.get(i)));
+		Apply(new BulkCommand<DeleteCue>(del_commands));
 	}
 
 	/**
@@ -268,11 +287,18 @@ public class Context
 	/**
 	 * Declares a new useage of a resource in the project.
 	 * @param source Absolute path of the resource to incorporate.
-	 * @return Newly incorporated resource.
+	 * @return Newly incorporated resource or {@code null} if the resource could
+	 * not be accessed.
 	 */
-	public static Resource RegisterSoundResource(File source)
+	public static Resource RegisterResource(File source)
 	{
-		return _project.RegisterResource(source);
+		try { return _project.RegisterResource(source); }
+		catch (IOException e)
+		{
+			Errors.ErrorDialog("Import Error", 
+				"An error prevented the resource from being imported.");
+		}
+		return null;
 	}
 
 	/**
@@ -291,12 +317,9 @@ public class Context
 	 */
 	public static void CleanupResources()
 	{
-		while (_undoStack.size() != 0 && _undoStack.getLast() != _lastSaved)
-		{
-			Command c = _undoStack.remove(_undoStack.size() - 1);
-			c.Revert(_project);
-		}
-
+		while (!_undoStack.isEmpty() && _undoStack.getLast() != _lastSaved)
+			_undoStack.removeLast().Revert(_project);
+		
 		_project.CullUnusedResources();
 	}
 }

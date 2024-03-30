@@ -9,6 +9,7 @@ import java.io.Serializable;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -83,8 +84,9 @@ public class Project
 	 * copied to the project directory if it was not previously registered.
 	 * @param source File to introduce as a resource to the project.
 	 * @return The newly incorporated resource.
+	 * @throws IOException If the source file cannot be accessed.
 	 */
-	public Resource RegisterResource(File source)
+	public Resource RegisterResource(File source) throws IOException
 	{
 		// Look up the source in the cache first and return it if found:
 		CacheData cd = _importCache.get(source);
@@ -99,6 +101,7 @@ public class Project
 			);
 			Resource resource = new Resource(Context._folder, file_str);
 			Metadata data = new Metadata(source.getName());
+
 			if (!_resources.containsKey(resource))
 			{
 				Files.copy(source.toPath(), resource.toPath());
@@ -106,13 +109,10 @@ public class Project
 				// Cache the resource for future imports of the same file:
 				_importCache.put(source, new CacheData(source, resource));
 			}
+
 			return resource;
 		}
-		catch (IOException e)
-		{
-			e.printStackTrace();
-			return null;
-		}
+		catch (IOException e) { throw e; }
 	}
 
 	/**
@@ -161,17 +161,17 @@ public class Project
 	 * considered unused.
 	 */
 	public void CullUnusedResources()
+	// ToDo: Make it possible for the user to clear unused files if this fails.
 	{
-		var it = _resources.entrySet().iterator();
-		for (; it.hasNext();)
+		for (var it = _resources.entrySet().iterator(); it.hasNext();)
 		{
-			var m = it.next();
-			if (m.getValue()._uses == 0)
-			{
-				try { Files.delete(m.getKey().toPath()); }
-				catch (IOException e) { e.printStackTrace(); }
-				it.remove();
-			}
+			Entry<Resource, Metadata> m = it.next();
+			if (m.getValue()._uses != 0) continue;
+			
+			try { Files.delete(m.getKey().toPath()); }
+			// Failure to delete unused files it likely rare and unimportant.
+			catch (IOException e) { e.printStackTrace(); }
+			it.remove();
 		}
 	}
 }

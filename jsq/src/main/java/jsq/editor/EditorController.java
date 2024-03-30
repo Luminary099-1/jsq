@@ -1,7 +1,6 @@
 package jsq.editor;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -36,6 +35,7 @@ import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.WindowEvent;
 import jsq.Context;
 import jsq.CueTypes;
+import jsq.Errors;
 import jsq.command.BulkCommand;
 import jsq.command.Command;
 import jsq.command.DeleteCue;
@@ -258,32 +258,6 @@ public class EditorController
 	}
 
 	/**
-	 * Shows the user a dialog indicating an error occurred and displays the
-	 * associated stacktrace.
-	 * @param title Title for the dialog.
-	 * @param message Explains what operation failed/what went wrong.
-	 * @param e The offending exception.
-	 */
-	protected void ExceptionDialog(String title, String message, Exception e)
-	{
-		e.printStackTrace();
-		Alert alert = new Alert(AlertType.ERROR);
-		alert.setTitle(title);
-		alert.setHeaderText(message);
-		StringWriter sw = new StringWriter();
-		PrintWriter pw = new PrintWriter(sw);
-		e.printStackTrace(pw);
-		String e_text = sw.toString();
-		
-		TextArea ta = new TextArea(e_text);
-		ta.setEditable(false);
-		ta.setWrapText(true);
-
-		alert.getDialogPane().setExpandableContent(ta);
-		alert.showAndWait();
-	}
-
-	/**
 	 * Returns {@code true} if the current project is saved or the user verifies
 	 * they are willing to lose unsaved changes.
 	 * @param action Description of the action being undertaken that would cause
@@ -306,8 +280,7 @@ public class EditorController
 		ButtonType type = alert.showAndWait().get();
 		if (type == ButtonType.YES)
 		{
-			try { Context.Save(); }
-			catch (IOException e) { e.printStackTrace(); }
+			OnFileSave();
 			return true;
 		}
 		return type == ButtonType.NO;
@@ -382,8 +355,8 @@ public class EditorController
 		try { Context.Save(); }
 		catch (Exception e)
 		{
-			ExceptionDialog("Error", 
-				"An error prevented the project from being saved.", e);
+			Errors.ErrorDialog("Save Error", 
+				"An error prevented the project from being saved.");
 		}
 	}
 
@@ -443,7 +416,7 @@ public class EditorController
 
 	/**
 	 * Inserts the cues in the clipboard into the cue list after last selected
-	 * cue.
+	 * cue, or at the end of the list if no cues are selected.
 	 */
 	@FXML protected void OnPaste()
 	{
@@ -451,7 +424,7 @@ public class EditorController
 		else
 		{
 			ObservableList<Integer> selected = _sm.getSelectedIndices();
-			Context.Paste(selected.get(selected.size() - 1) + 1);
+			Context.Paste(selected.getLast() + 1);
 		}
 	}
 
@@ -590,7 +563,8 @@ public class EditorController
 		File file = chooser.showOpenDialog(Context._stage);
 		if (file == null) return;
 		_cueSelectedSoundFile.setText(file.getName());
-		Resource res = Context.RegisterSoundResource(file);
+		Resource res = Context.RegisterResource(file);
+		if (res == null) return;
 		
 		GenerateCommands(
 			(c, i) -> { return new UpdateSoundResource((PlaySound) c, res); }

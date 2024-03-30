@@ -1,6 +1,8 @@
 package jsq.home;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.Comparator;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -13,6 +15,7 @@ import javafx.scene.control.MultipleSelectionModel;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TextField;
 import jsq.Context;
+import jsq.Errors;
 import jsq.editor.EditorController;
 
 
@@ -62,19 +65,30 @@ public class HomeController
 		for (File project : projects)
 			if (ValidateProjectFolder(project)) _recentProjects.add(project);
 
+		_recentProjects.sort(new Comparator<File>()
+			{
+				@Override public int compare(File o1, File o2)
+				{ return Long.signum(o2.lastModified() - o1.lastModified()); }
+			}
+		);
+
 		_workspaceList.setItems(_recentProjects);
-		_workspaceList.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+		_workspaceList.getSelectionModel()
+			.setSelectionMode(SelectionMode.SINGLE);
 		_workspaceList.setCellFactory(workspace_lv -> new WorkspaceFileCell());
 	}
 
-	/** Opens the project selected in the list of workspace projects. */
-	@FXML protected void OnOpenWorkspace()
+	/**
+	 * Opens the project selected in the list of workspace projects.
+	 * @throws RuntimeException If the context switch to the editor fails.
+	 */
+	@FXML protected void OnOpenWorkspace() throws RuntimeException
 	{
 		MultipleSelectionModel<File> sm = _workspaceList.getSelectionModel();
 		if (sm.isEmpty()) return;
 		Context._folder = sm.getSelectedItem();
 		try { Context.Load();}
-		catch (Exception e) { e.printStackTrace(); }
+		catch (Exception e) { throw new RuntimeException(e); }
 		Context.SwitchScene(EditorController.class.getResource("editor.fxml"));
 	}
 
@@ -106,15 +120,11 @@ public class HomeController
 			return;
 		}
 
-		if (!Context.InitializeProjectDirectory(project_dir))
+		try { Context.InitializeProjectDirectory(project_dir); }
+		catch (IOException e)
 		{
-			Alert alert = new Alert(AlertType.ERROR);
-			alert.setTitle("Error Creating a New Project");
-			alert.setHeaderText(
-				"An unspecified error occurred when "
-				+ "attempting to create the project."
-			);
-			alert.showAndWait();
+			Errors.ErrorDialog("Error", 
+				"An error prevented the new project from being initialized.");
 			return;
 		}
 

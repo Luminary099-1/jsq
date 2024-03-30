@@ -3,6 +3,7 @@ package jsq.command;
 import jsq.cue.Cue;
 import jsq.project.Project;
 
+
 /** Command to update a cue's follows flag. */
 public class UpdateCueFollows extends Command
 {

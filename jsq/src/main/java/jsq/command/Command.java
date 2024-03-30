@@ -7,6 +7,7 @@ import jsq.project.Project;
 public abstract class Command
 // ToDo: Consider making command creation a series of statis methods in cues. This would allow cue fields to be hidden.
 {
+	/** Indicates whether the command has been applied last. */
 	protected boolean _applied = false;
 	
 	/**

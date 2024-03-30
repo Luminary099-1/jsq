@@ -3,6 +3,7 @@ package jsq.command;
 import jsq.cue.Cue;
 import jsq.project.Project;
 
+
 /** Command to update a cue's active flag. */
 public class UpdateCueActive extends Command
 {

@@ -26,7 +26,6 @@ public class UpdateCueNotes extends Command
 		_newNotes = new_notes;
 	}
 
-
 	@Override public void Apply(Project p)
 	{
 		super.Apply(p);

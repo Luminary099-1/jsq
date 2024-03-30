@@ -9,7 +9,6 @@ import org.json.JSONTokener;
 
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.scene.control.Alert;
 import javafx.stage.Stage;
 import jsq.home.HomeController;
 
@@ -26,6 +25,7 @@ public class App extends Application
 	 */
 	public static void main(String[] args)
 	{
+		Thread.setDefaultUncaughtExceptionHandler(new Errors());
 		_canRun = LoadSettings();
 		launch();
 	}
@@ -87,13 +87,9 @@ public class App extends Application
 	{
 		if (!_canRun)
 		{
-			Alert alert = new Alert(Alert.AlertType.ERROR);
-			alert.setTitle("Failed to launch JSQ");
-			alert.setHeaderText(
+			Errors.ErrorDialog("Failed to launch JSQ",
 				"Failed to initialize the application's settings.");
-			alert.showAndWait();
 			Platform.exit();
-			return;
 		}
 
 		Context._stage = stage;

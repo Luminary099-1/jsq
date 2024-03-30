@@ -46,8 +46,10 @@ public class StopSelectListCell extends ListCell<Cue>
 	 * @param cue The cue being displayed.
 	 * @param empty {@code true} if {@code this} represents an empty cell;
 	 * {@code false} otherwise.
+	 * @throws RuntimeException If the cell's FXML cannot be loaded.
 	 */
-	@Override protected void updateItem(Cue cue, boolean empty)
+	@Override protected void
+	updateItem(Cue cue, boolean empty) throws RuntimeException
 	{
 		super.updateItem(cue, empty);
 		if (empty || cue == null)
@@ -62,7 +64,7 @@ public class StopSelectListCell extends ListCell<Cue>
 				StopSelectListCell.class.getResource("stopSelectCell.fxml"));
 			_loader.setController(this);
 			try { _loader.load(); }
-			catch (IOException e) { e.printStackTrace(); }
+			catch (IOException e) { throw new RuntimeException(e); }
 		}
 
 		_number.setText(Integer.toString(this.getIndex() + 1));

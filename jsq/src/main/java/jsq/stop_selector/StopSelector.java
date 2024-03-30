@@ -42,8 +42,9 @@ public class StopSelector extends Stage
 	/**
 	 * Creates a new modal to select stop cue targets.
 	 * @param stopping_index The index of the first stop cue to target.
+	 * @throws RuntimeException If the scene's FXML cannot be loaded.
 	 */
-	private StopSelector(int stopping_index)
+	private StopSelector(int stopping_index) throws RuntimeException
 	{
 		super();
 		_stoppingIndex = stopping_index;
@@ -51,12 +52,10 @@ public class StopSelector extends Stage
 		FXMLLoader loader
 			= new FXMLLoader(getClass().getResource("stopSelector.fxml"));
 		loader.setController(this);
-		try
-		{
-			Parent root_node = loader.load();
-			setScene(new Scene(root_node, 1280, 720));
-		}
-		catch (IOException e) { e.printStackTrace(); }
+		Parent root_node = null;
+		try { root_node = loader.load(); }
+		catch (IOException e) { throw new RuntimeException(e); }
+		setScene(new Scene(root_node, 1280, 720));
 	}
 
 	/**
@@ -73,7 +72,7 @@ public class StopSelector extends Stage
 		if (prev_targets != null)
 		{
 			MultipleSelectionModel<Cue> sm = sel._cueList.getSelectionModel();
-			prev_targets.forEach((c) -> {sm.select(c); });
+			prev_targets.forEach((c) -> { sm.select(c); });
 		}
 		sel.showAndWait();
 		return (sel._selection != null)
