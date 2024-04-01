@@ -40,6 +40,12 @@
             <artifactId>commons-io</artifactId>
             <version>2.15.1</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.lwjgl/lwjgl-openal -->
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl-openal</artifactId>
+            <version>3.3.3</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
